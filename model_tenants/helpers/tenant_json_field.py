@@ -80,7 +80,7 @@ class TenantJsonFieldHelper:
 
         return data
 
-    def update_fields(self, validated_data, partial=False, commit=True)
+    def update_fields(self, validated_data, partial=False, commit=True):
         if not partial:
             setattr(
                 self.instance.settings,

@@ -4,8 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from django.db import transaction
 
-from model_tenants.permissions import (DjangoTenantModelPermission,
-                                      ValidInvitationPermission)
+from model_tenants.permissions import DjangoTenantModelPermission
 from model_tenants.serializers import *
 from model_tenants.models import *
 
