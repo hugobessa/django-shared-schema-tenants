@@ -26,8 +26,8 @@ TENANT_RELATIONSHIP_SERIALIZER = (
             'model_tenants.serializers.TenantSiteSerializer'))
 
 
-'DEFAULT_TENANT_SLUG = tenant_settings.get('DEFAULT_TENANT_SLUG', 'default')
-'
+DEFAULT_TENANT_SLUG = tenant_settings.get('DEFAULT_TENANT_SLUG', 'default')
+
 
 DEFAULT_TENANT_SETTINGS_FIELDS = tenant_settings.get(
                                   'DEFAULT_TENANT_SETTINGS_FIELDS', {})
