@@ -1,7 +1,7 @@
 from model_tenants.exceptions import TenantFieldTypeConfigurationError
 from model_tenants.helpers.tenants import get_current_tenant
 
-class TenantJsonFieldHelper:
+class TenantJSONFieldHelper:
     TYPES_TO_INTERNAL_MAP = {
         'string': [str],
         'number': [int, float],

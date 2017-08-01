@@ -3,10 +3,10 @@ from model_tenants.settings import (
 
 from django.conf import settings
 
-from model_tenants.helpers.tenant_json_field import TenantJsonFieldHelper
+from model_tenants.helpers.tenant_json_field import TenantJSONFieldHelper
 
 
-class TenantSettingsHelper(TenantJsonFieldHelper):
+class TenantSettingsHelper(TenantJSONFieldHelper):
     TENANT_FIELDS = getattr(settings, 'TENANT_SETTINGS_FIELDS',
                             DEFAULT_TENANT_SETTINGS_FIELDS)
 
