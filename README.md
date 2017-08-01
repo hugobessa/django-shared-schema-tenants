@@ -14,7 +14,7 @@ pip install git+https://github.com/hugobessa/django_model_tenants.git#master
 
 ``` python
 INSTALLED_APPS = [
-  ...
+  # ...
   'model_tenants',
 ]
 ```
@@ -41,13 +41,13 @@ class MyModelA(SingleTenantModelMixin)
     field1 = models.CharField(max_length=100)
     field2 = models.IntegerField()
 
-...
+# ...
 
 # 'default' tenant selected
 instance = MyModelA(field1='test default tenant', field2=0)
 instance.save()
 
-...
+# ...
 
 # 'other' tenant selected
 instance = MyModelA(field1='test other tenant', field2=1)
@@ -96,7 +96,7 @@ def my_function():
   ``` python
   def my_view(request):
       current_tenant = request.tenant
-      ...
+      # ...
   ```
 
 #### From `get_current_tenant` helper
@@ -106,7 +106,7 @@ def my_function():
 
   def my_function():
       current_tenant = get_current_tenant()
-      ...
+      # ...
   ```
 
 The models that inherit from `SingleTenantModelMixin` or `MultipleTenantsModelMixin` are also tenant aware. If you reatrieve a collection from database with a tenant context in your request, your collection will already be filtered by that tenant.
