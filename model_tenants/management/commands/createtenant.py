@@ -9,12 +9,12 @@ class Command(BaseCommand):
     #     parser.add_argument('poll_id', nargs='+', type=int)
 
     def handle(self, *args, **options):
-        name = raw_input('Enter the Tenant name: ')
-        slug = raw_input('Enter the Tenant slug: (%s)' % slugify(name))
+        name = input('Enter the Tenant name: ')
+        slug = input('Enter the Tenant slug: (%s)' % slugify(name))
 
         if not slug:
             slug = slugify(name)
 
         Tenant.objects.create(name=name, slug=slug)
 
-        self.stdout.write(self.style.SUCCESS('Successfully create Tenant %s' % name))
+        self.stdout.write(self.style.SUCCESS('Successfully created Tenant %s' % name))
