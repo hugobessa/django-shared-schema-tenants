@@ -15,7 +15,7 @@ from model_tenants.settings import DEFAULT_TENANT_SETTINGS
 from plans.validators import validate_json
 
 
-class Tenant('TimeStampedModel):
+class Tenant(TimeStampedModel):
     name = models.CharField(max_length=255)
     slug = models.CharField(max_length=255, primary_key=True)
 
