@@ -12,7 +12,7 @@ from model_tenants.exceptions import TenantNotFoundError
 from model_tenants.managers import (
     SingleTenantModelManager, MultipleTenantModelManager)
 from model_tenants.settings import DEFAULT_TENANT_SETTINGS
-from plans.validators import validate_json
+from model_tenants.validators import validate_json
 
 
 class Tenant(TimeStampedModel):
