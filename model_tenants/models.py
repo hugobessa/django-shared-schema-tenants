@@ -56,7 +56,7 @@ class Tenant(TimeStampedModel):
 
 
 class TenantSite(TimeStampedModel):
-    tenant = models.ForeignKey(TENANT_MODEL, related_name="tenant_sites")
+    tenant = models.ForeignKey('Tenant', related_name="tenant_sites")
     site = models.OneToOneField('sites.Site', related_name="tenant_site")
 
     objects = SingleTenantModelManager()
@@ -66,7 +66,7 @@ class TenantSite(TimeStampedModel):
 
 
 class TenantRelationship(TimeStampedModel):
-    tenant = models.ForeignKey(TENANT_MODEL, related_name="relationships")
+    tenant = models.ForeignKey('Tenant', related_name="relationships")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="relationships")
     groups = models.ManyToManyField('auth.Group',
                                     related_name="user_tenant_groups")
