@@ -76,7 +76,7 @@ if sys.argv[-1] == 'publish':
 
 
 setup(
-    name='djangorestframework',
+    name='djangomodeltenants',
     version=version,
     license='MIT',
     description='Model based multi tenancy for Django.',
