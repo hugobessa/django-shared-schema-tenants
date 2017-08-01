@@ -11,20 +11,19 @@ from model_utils.models import TimeStampedModel
 from model_tenants.exceptions import TenantNotFoundError
 from model_tenants.managers import (
     SingleTenantModelManager, MultipleTenantModelManager)
-from model_tenants.constants import DEFAULT_TENANT_SETTINGS
+from model_tenants.settings import DEFAULT_TENANT_SETTINGS
 from plans.validators import validate_json
 
 
-class Tenant(TimeStampedModel):
+class Tenant('TimeStampedModel):
     name = models.CharField(max_length=255)
     slug = models.CharField(max_length=255, primary_key=True)
-    sites = models.ManyToManyField('sites.Site', related_name='tenants')
 
     if 'postgresql' in settings.DATABASES['default']['ENGINE']:
         from django.contrib.postgres.fields import JSONField
         extra_data = JSONField(blank=True, null=True)
         settings = JSONField(blank=True, null=True,
-                             default=DEFAULT_TENANT_SETTINGS)
+                            default=DEFAULT_TENANT_SETTINGS)
     else:
         _extra_data = models.TextField(blank=True, null=True,
                             validators=[validate_json])
@@ -57,7 +56,7 @@ class Tenant(TimeStampedModel):
 
 
 class AbstractSingleTenantModel(models.Model):
-    tenant = models.ForeignKey('model_tenants.Tenant')
+    tenant = models.ForeignKey(TENANT_MODEL)
 
     objects = SingleTenantModelManager()
 
@@ -66,7 +65,7 @@ class AbstractSingleTenantModel(models.Model):
 
 
 class AbstractMultipleTenantsModel(models.Model):
-    tenants = models.ManyToManyField('model_tenants.Tenant')
+    tenants = models.ManyToManyField(TENANT_MODEL)
 
     objects = MultipleTenantModelManager()
 
@@ -75,7 +74,7 @@ class AbstractMultipleTenantsModel(models.Model):
 
 
 class TenantSite(TimeStampedModel):
-    tenant = models.ForeignKey('Tenant', related_name="tenant_sites")
+    tenant = models.ForeignKey(TENANT_MODEL, related_name="tenant_sites")
     site = models.OneToOneField('sites.Site', related_name="tenant_site")
 
     objects = SingleTenantModelManager()
@@ -85,7 +84,7 @@ class TenantSite(TimeStampedModel):
 
 
 class TenantRelationship(TimeStampedModel):
-    tenant = models.ForeignKey('model_tenants.Tenant', related_name="relationships")
+    tenant = models.ForeignKey(TENANT_MODEL, related_name="relationships")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="relationships")
     groups = models.ManyToManyField('auth.Group',
                                     related_name="user_tenant_groups")
