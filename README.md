@@ -35,20 +35,22 @@ The models become tenant aware through inheritance. You just have to make your m
 
 
 ``` python
-class MyModel(SingleTenantModelMixin)
+from model_tenants.mixins import SingleTenantModelMixin, MultipleTenantsModel
+
+class MyModelA(SingleTenantModelMixin)
     field1 = models.CharField(max_length=100)
     field2 = models.IntegerField()
 
 ...
 
 # 'default' tenant selected
-instance = MyModel(field1='test default tenant', field2=0)
+instance = MyModelA(field1='test default tenant', field2=0)
 instance.save()
 
 ...
 
 # 'other' tenant selected
-instance = MyModel(field1='test other tenant', field2=1)
+instance = MyModelA(field1='test other tenant', field2=1)
 instance.save()
 
 print(MyModel.objects.filter(field1__icontains="test")) 
