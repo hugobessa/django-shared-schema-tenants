@@ -1,4 +1,5 @@
 from django.db.models import Manager
+from django.db import transactions
 from model_tenants.helpers.tenants import get_current_tenant
 
 
@@ -14,7 +15,8 @@ class SingleTenantModelManager(Manager):
     def create(self, *args, **kwargs):
         tenant = get_current_tenant()
         if tenant:
-            return super().get_queryset().filter(tenant=tenant)
+            kwargs['tenant'] = tenant
+            return super().create(*args, **kwargs)
         else:
             raise TenantNotFoundError()
 
@@ -31,6 +33,8 @@ class MultipleTenantModelManager(Manager):
     def create(self, *args, **kwargs):
         tenant = get_current_tenant()
         if tenant:
-            return super().get_queryset().filter(tenants=tenant)
+            with transactions.atomic():
+                model_instance = super().create(*args, **kwargs)
+                model_instance.tenants.add(tenant)
         else:
             raise TenantNotFoundError()
