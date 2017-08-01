@@ -1,4 +1,4 @@
-from model_tenants.constants import (
+from model_tenants.settings import (
     DEFAULT_TENANT_EXTRA_DATA_FIELDS)
 
 from django.conf import settings
