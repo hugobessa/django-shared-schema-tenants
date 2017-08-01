@@ -5,8 +5,17 @@ from rest_framework.views import APIView
 from django.db import transaction
 
 from model_tenants.permissions import DjangoTenantModelPermission
-from model_tenants.serializers import *
 from model_tenants.models import *
+from model_tenants.utils import import_class
+from model_tenants.settings import (
+    TENANT_SERIALIZER, TENANT_SITE_SERIALIZER, 
+    TENANT_SETTINGS_SERIALIZER)
+from model_tenants.helpers.tenants import get_current_tenant
+
+
+TenantSerializer = import_class(TENANT_SERIALIZER)
+TenantSiteSerializer = import_class(TENANT_SITE_SERIALIZER)
+TenantSettingsSerializer = import_class(TENANT_SETTINGS_SERIALIZER)
 
 
 class TenantListView(generics.ListCreateAPIView):
@@ -32,6 +41,22 @@ class TenantDetailsView(generics.RetrieveUpdateDestroyAPIView):
         else:
             return Tenant.objects.none()
 
+    
+    def get_object(self):
+        return get_current_tenant()
+
+
+class TenantSettingsDetailsView(generics.RetrieveUpdateAPIView):
+    serializer_class = TenantSettingsSerializer
+    permission_classes = [DjangoTenantModelPermission]
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return Tenant.objects.filter(
+                relationships__user=self.request.user).distinct()
+        else:
+            return Tenant.objects.none()
+
 
 class TenantSiteListView(generics.ListCreateAPIView):
     serializer_class = TenantSiteSerializer
@@ -40,11 +65,9 @@ class TenantSiteListView(generics.ListCreateAPIView):
     def get_queryset(self):
         return TenantSite.objects.filter().distinct()
 
-
     def get_serializer(self, *args, **kwargs):
-        from model_tenants.middleware import TenantMiddleware
         data = kwargs.get('data', {})
-        data['tenant'] = TenantMiddleware.get_current_tenant()
+        data['tenant'] = get_current_tenant()
         kwargs['data'] = data
         return super().get_serializer(*args, **kwargs)
 
