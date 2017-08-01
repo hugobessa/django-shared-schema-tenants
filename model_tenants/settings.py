@@ -46,3 +46,9 @@ DEFAULT_TENANT_EXTRA_DATA_FIELDS = tenant_settings.get(
             'validators': [],
         }
     })
+
+
+DEFAULT_SITE_DOMAIN = tenant_settings.get(
+    'DEFAULT_SITE_DOMAIN',
+    'localhost'
+)
