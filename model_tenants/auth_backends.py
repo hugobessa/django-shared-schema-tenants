@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from model_tenants.models import Tenant, TenantRelationship
-from model_tenants.middleware import TenantMiddleware
+from model_tenants.helpers.tenants import get_current_tenant
 
 
 class TenantModelBackend(ModelBackend):
@@ -31,7 +31,7 @@ class TenantModelBackend(ModelBackend):
         be either "group" or "user" to return permissions from
         `_get_group_permissions` or `_get_user_permissions` respectively.
         """
-        tenant = TenantMiddleware.get_current_tenant()
+        tenant = get_current_tenant()
         if tenant == None: return set()
 
         if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
@@ -62,7 +62,7 @@ class TenantModelBackend(ModelBackend):
         if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
             return set()
         try:
-            tenant = TenantMiddleware.get_current_tenant()
+            tenant = get_current_tenant()
             if tenant == None: return set()
             relationship = TenantRelationship.objects.get(
                 user=user_obj, tenant=tenant)
@@ -112,7 +112,7 @@ try:
                 user = filter_users_by_username(username).get()
 
                 if user.check_password(password):
-                    tenant = TenantMiddleware.get_current_tenant()
+                    tenant = get_current_tenant()
                     if tenant == None: return set()
                     if (user.relationships.filter(tenant=tenant).exists()
                             or user.is_superuser):
@@ -132,7 +132,7 @@ try:
             if email:
                 for user in filter_users_by_email(email):
                     if user.check_password(credentials["password"]):
-                        tenant = TenantMiddleware.get_current_tenant()
+                        tenant = get_current_tenant()
                         if tenant == None: return set()
                         if (user.relationships.filter(tenant=tenant).exists()
                                 or user.is_superuser):

@@ -1,5 +1,6 @@
 from rest_framework import permissions
 from django.utils.translation import ugettext_lazy as _
+from model_tenants.helpers.tenants import get_current_tenant
 
 
 class DjangoTenantModelPermission(permissions.DjangoModelPermissions):
@@ -15,11 +16,11 @@ class DjangoTenantModelPermission(permissions.DjangoModelPermissions):
     }
 
     def has_permission(self, request, view):
-        from model_tenants.middleware import TenantMiddleware
-        tenant = TenantMiddleware.get_current_tenant()
-        return super().has_permission(request, view) \
-            and tenant != None \
-            and request.user.relationships.filter(tenant=tenant).exists()
+        tenant = get_current_tenant()
+        return (
+            super().has_permission(request, view)
+                and tenant != None
+                and request.user.relationships.filter(tenant=tenant).exists())
 
     def has_object_permission(self, request, view, obj):
         return request.user.relationships.filter(tenant=obj.tenant).exists()

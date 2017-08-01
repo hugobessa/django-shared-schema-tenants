@@ -1,5 +1,5 @@
 from model_tenants.exceptions import TenantFieldTypeConfigurationError
-from model_tenants.middleware import TenantMiddleware
+from model_tenants.helpers.tenants import get_current_tenant
 
 class TenantJsonFieldHelper:
     TYPES_TO_INTERNAL_MAP = {
@@ -15,7 +15,7 @@ class TenantJsonFieldHelper:
 
     def __init__(self, instance_field_name, instance=None):
         if instance == None:
-            instance = TenantMiddleware.get_current_tenant()
+            instance = get_current_tenant()
 
         self.instance = instance
         self.instance_field_name = instance_field_name
