@@ -34,18 +34,41 @@ INSTALLED_APPS = [
 The models become tenant aware through inheritance. You just have to make your model inherit from `SingleTenantModelMixin` or `MultipleTenantsModelMixin` and you're set.
 
 
+``` python
+class MyModel(SingleTenantModelMixin)
+    field1 = models.CharField(max_length=100)
+    field2 = models.IntegerField()
+
+...
+
+# 'default' tenant selected
+instance = MyModel(field1='test default tenant', field2=0)
+instance.save()
+
+...
+
+# 'other' tenant selected
+instance = MyModel(field1='test other tenant', field2=1)
+instance.save()
+
+print(MyModel.objects.filter(field1__icontains="test")) 
+# prints only the instance with 'test other tenant' in field1
+
+```
+
+
 ### Selecting tenant from request
 
-1. Tenant site
+#### Tenant site
 
   If you access the site from a domain registered to a tenant, that tenant is automatically selected.
 
-2. Tenant-Slug HTTP header
+#### Tenant-Slug HTTP header
 
   If the header `Tenant-Slug` could be found in the request, the tenant with that slug is automatically selected.
 
 
-### Forcing tenant selection
+#### Forcing tenant selection
 
 You can force tenant selection using set_tenant method.
 
@@ -64,7 +87,7 @@ def my_function():
 
 ### Accessing current tenant
 
-1. Request
+#### From Request
 
   You can access the current tenant from the request.
 
@@ -74,7 +97,7 @@ def my_function():
       ...
   ```
 
-2. `get_current_tenant` helper
+#### From `get_current_tenant` helper
 
   ``` python
   from model_tenants.helpers import get_current_tenant
