@@ -3,9 +3,9 @@ from django.utils.text import ugettext_lazy as _
 
 from rest_framework import serializers
 
-from .models import (Tenant, TenantSite, TenantRelationship)
+from model_tenants.models import (Tenant, TenantSite, TenantRelationship)
 
-from model_tenants.utils import create_default_tenant_groups
+from model_tenants.helpers.tenants import create_default_tenant_groups
 
 try:
    from allauth.account import app_settings as allauth_settings
