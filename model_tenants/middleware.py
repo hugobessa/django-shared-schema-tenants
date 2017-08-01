@@ -30,6 +30,11 @@ class TenantMiddleware(object):
     @classmethod
     def get_current_tenant(cls):
         return cls._threadmap[threading.get_ident()]
+    
+    @classmethod
+    def set_tenant(cls, tenant_slug):
+        cls._threadmap[threading.get_ident()] = SimpleLazyObject(
+                                                    lambda: Tenant.objects.get(slug=tenant_slug))
 
     def process_request(self, request):
         request.tenant = SimpleLazyObject(lambda: get_tenant(request))

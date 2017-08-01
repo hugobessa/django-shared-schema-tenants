@@ -55,24 +55,6 @@ class Tenant('TimeStampedModel):
         return self.name
 
 
-class AbstractSingleTenantModel(models.Model):
-    tenant = models.ForeignKey(TENANT_MODEL)
-
-    objects = SingleTenantModelManager()
-
-    class Meta:
-        abstract = True
-
-
-class AbstractMultipleTenantsModel(models.Model):
-    tenants = models.ManyToManyField(TENANT_MODEL)
-
-    objects = MultipleTenantModelManager()
-
-    class Meta:
-        abstract = True
-
-
 class TenantSite(TimeStampedModel):
     tenant = models.ForeignKey(TENANT_MODEL, related_name="tenant_sites")
     site = models.OneToOneField('sites.Site', related_name="tenant_site")

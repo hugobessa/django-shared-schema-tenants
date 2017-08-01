@@ -7,6 +7,11 @@ def get_current_tenant():
     return TenantMiddleware.get_current_tenant()
 
 
+def set_tenant(tenant_slug):
+    from model_tenants.middleware import TenantMiddleware
+    return TenantMiddleware.set_tenant(tenant_slug)
+
+
 def create_default_tenant_groups():
     with transaction.atomic():
         group, created = Group.objects.get_or_create(name='tenant_owner')

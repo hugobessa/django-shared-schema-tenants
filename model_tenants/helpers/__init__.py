@@ -1,2 +1,3 @@
+from model_tenants.helpers.tenants import get_current_tenant, set_tenant
 from model_tenants.helpers.tenant_extra_data import TenantExtraDataHelper
 from model_tenants.helpers.tenant_settings import TenantSettingsHelper
