@@ -1,5 +1,5 @@
 from django.db.models import Manager
-from django.db import transactions
+from django.db import transaction
 from shared_schema_tenants.helpers.tenants import get_current_tenant
 
 
@@ -33,7 +33,7 @@ class MultipleTenantModelManager(Manager):
     def create(self, *args, **kwargs):
         tenant = get_current_tenant()
         if tenant:
-            with transactions.atomic():
+            with transaction.atomic():
                 model_instance = super().create(*args, **kwargs)
                 model_instance.tenants.add(tenant)
         else:
