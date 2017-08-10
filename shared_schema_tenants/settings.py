@@ -1,6 +1,6 @@
 from django.conf import settings
 
-tenant_settings = getattr(settings, 'shared_schema_tenants', {})
+tenant_settings = getattr(settings, 'SHARED_SCHEMA_TENANTS', {})
 
 
 TENANT_SERIALIZER = (tenant_settings
