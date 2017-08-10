@@ -48,6 +48,18 @@ Add Django Shared Schema Tenants's URL patterns:
         ...
     ]
 
+
+Add TenantMiddleware to your `MIDDLEWARES`:
+
+.. code-block:: python
+
+    MIDDLEWARES = [
+        # ...
+        'shared_schema_tenants.middleware.TenantMiddleware',
+        # ...
+    ]
+
+
 Features
 --------
 
