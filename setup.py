@@ -2,106 +2,79 @@
 # -*- coding: utf-8 -*-
 import os
 import re
-import shutil
 import sys
-from io import open
-
-from setuptools import setup
 
 try:
-    from pypandoc import convert
-
-    def read_md(f):
-        return convert(f, 'rst')
+    from setuptools import setup
 except ImportError:
-    print("warning: pypandoc module not found, could not convert Markdown to RST")
-
-    def read_md(f):
-        return open(f, 'r', encoding='utf-8').read()
+    from distutils.core import setup
 
 
-def get_version(package):
-    """
-    Return package version as listed in `__version__` in `init.py`.
-    """
-    init_py = open(os.path.join(package, '__init__.py')).read()
-    return re.search("__version__ = ['\"]([^'\"]+)['\"]", init_py).group(1)
+def get_version(*file_paths):
+    """Retrieves the version from shared_schema_tenants/__init__.py"""
+    filename = os.path.join(os.path.dirname(__file__), *file_paths)
+    version_file = open(filename).read()
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError('Unable to find version string.')
 
 
-def get_packages(package):
-    """
-    Return root package and all sub-packages.
-    """
-    return [dirpath
-            for dirpath, dirnames, filenames in os.walk(package)
-            if os.path.exists(os.path.join(dirpath, '__init__.py'))]
-
-
-def get_package_data(package):
-    """
-    Return all files under the root package, that are not in a
-    package themselves.
-    """
-    walk = [(dirpath.replace(package + os.sep, '', 1), filenames)
-            for dirpath, dirnames, filenames in os.walk(package)
-            if not os.path.exists(os.path.join(dirpath, '__init__.py'))]
-
-    filepaths = []
-    for base, filenames in walk:
-        filepaths.extend([os.path.join(base, filename)
-                          for filename in filenames])
-    return {package: filepaths}
-
-
-version = get_version('model_tenants')
+version = get_version("shared_schema_tenants", "__init__.py")
 
 
 if sys.argv[-1] == 'publish':
     try:
-        import pypandoc
+        import wheel
+        print("Wheel version: ", wheel.__version__)
     except ImportError:
-        print("pypandoc not installed.\nUse `pip install pypandoc`.\nExiting.")
-    if os.system("pip freeze | grep twine"):
-        print("twine not installed.\nUse `pip install twine`.\nExiting.")
+        print('Wheel library missing. Please run "pip install wheel"')
         sys.exit()
-    os.system("python setup.py sdist bdist_wheel")
-    os.system("twine upload dist/*")
-    print("You probably want to also tag the version now:")
-    print("  git tag -a %s -m 'version %s'" % (version, version))
-    print("  git push --tags")
-    shutil.rmtree('dist')
-    shutil.rmtree('build')
-    shutil.rmtree('djangomodeltenants.egg-info')
+    os.system('python setup.py sdist upload')
+    os.system('python setup.py bdist_wheel upload')
     sys.exit()
 
+if sys.argv[-1] == 'tag':
+    print("Tagging the version on git:")
+    os.system("git tag -a %s -m 'version %s'" % (version, version))
+    os.system("git push --tags")
+    sys.exit()
+
+readme = open('README.rst').read()
+history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
-    name='djangomodeltenants',
+    name='django-shared-schema-tenants',
     version=version,
-    license='MIT',
-    description='Model based multi tenancy for Django.',
-    long_description=read_md('README.md'),
+    description="""A lib to help you create applications with shared schema muti tch pain""",
+    long_description=readme + '\n\n' + history,
     author='Hugo Bessa',
-    author_email='hugo@bessa.me',  # SEE NOTE BELOW (*)
-    packages=get_packages('model_tenants'),
-    package_data=get_package_data('model_tenants'),
-    install_requires=[],
+    author_email='hugo@bessa.me',
+    url='https://github.com/hugobessa/django-shared-schema-tenants',
+    packages=[
+        'shared_schema_tenants',
+    ],
+    include_package_data=True,
+    install_requires=["django-model-utils>=2.0",],
+    license="MIT",
     zip_safe=False,
+    keywords='django-shared-schema-tenants',
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: Web Environment',
+        'Development Status :: 3 - Alpha',
         'Framework :: Django',
+        'Framework :: Django :: 1.8',
+        'Framework :: Django :: 1.9',
+        'Framework :: Django :: 1.10',
         'Framework :: Django :: 1.11',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
-        'Operating System :: OS Independent',
+        'Natural Language :: English',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
-        'Topic :: Internet :: WWW/HTTP',
-    ]
+    ],
 )
-
-# (*) Please direct queries to the discussion group, rather than to me directly
-#     Doing so helps ensure your question is helpful to other users.
-#     Queries directly to my email are likely to receive a canned response.
-#
-#     Many thanks for your understanding.
