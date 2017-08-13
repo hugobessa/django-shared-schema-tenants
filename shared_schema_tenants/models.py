@@ -4,8 +4,6 @@ from django.contrib.auth.signals import user_logged_in
 
 import json
 
-from model_utils.choices import Choices
-from model_utils.fields import StatusField
 from model_utils.models import TimeStampedModel
 
 from shared_schema_tenants.exceptions import TenantNotFoundError
