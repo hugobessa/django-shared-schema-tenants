@@ -1,5 +1,7 @@
 from django.db import models
 from shared_schema_tenants.settings import DEFAULT_TENANT_SLUG
+from shared_schema_tenants.managers import SingleTenantModelManager, MultipleTenantModelManager
+from shared_schema_tenants.models import Tenant
 
 
 def get_default_tenant():
