@@ -1,6 +1,7 @@
 from django.db.models import Manager
 from django.db import transaction
 from shared_schema_tenants.helpers.tenants import get_current_tenant
+from shared_schema_tenants.exceptions import TenantNotFoundError
 
 
 class SingleTenantModelManager(Manager):
