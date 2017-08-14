@@ -1,6 +1,9 @@
 from django.db import models
-from django.conf import settings
+from django.conf import settings as django_settings
 from django.contrib.auth.signals import user_logged_in
+from django.contrib.sites.models import Site
+from django.db.models.signals import pre_save, post_save
+
 
 import json
 
@@ -11,31 +14,33 @@ from shared_schema_tenants.managers import (
     SingleTenantModelManager, MultipleTenantModelManager)
 from shared_schema_tenants.settings import DEFAULT_TENANT_SETTINGS, DEFAULT_TENANT_EXTRA_DATA
 from shared_schema_tenants.validators import validate_json
+from shared_schema_tenants.signals import creates_default_site
 
 
 class Tenant(TimeStampedModel):
     name = models.CharField(max_length=255)
     slug = models.CharField(max_length=255, primary_key=True)
 
-    if 'postgresql' in settings.DATABASES['default']['ENGINE']:
+    if 'postgresql' in django_settings.DATABASES['default']['ENGINE']:
         from django.contrib.postgres.fields import JSONField
-        extra_data = JSONField(blank=True, null=True)
+        extra_data = JSONField(blank=True, null=True,
+                               default=DEFAULT_TENANT_EXTRA_DATA)
         settings = JSONField(blank=True, null=True,
-                            default=DEFAULT_TENANT_SETTINGS)
+                             default=DEFAULT_TENANT_SETTINGS)
     else:
         _extra_data = models.TextField(blank=True, null=True,
-                            validators=[validate_json],
-                            default=DEFAULT_TENANT_EXTRA_DATA)
+                                       validators=[validate_json],
+                                       default=json.dumps(DEFAULT_TENANT_EXTRA_DATA))
         _settings = models.TextField(blank=True, null=True,
-                            validators=[validate_json],
-                            default=json.loads(DEFAULT_TENANT_SETTINGS))
+                                     validators=[validate_json],
+                                     default=json.dumps(DEFAULT_TENANT_SETTINGS))
 
         @property
         def extra_data(self):
             import json
             return json.loads(self._extra_data)
 
-        @settings.setter
+        @extra_data.setter
         def extra_data(self, value):
             import json
             self._extra_data = json.dumps(value)
@@ -53,12 +58,12 @@ class Tenant(TimeStampedModel):
     def __str__(self):
         return self.name
 
+post_save.connect(creates_default_site, sender=Tenant)
+
 
 class TenantSite(TimeStampedModel):
     tenant = models.ForeignKey('Tenant', related_name="tenant_sites")
-    site = models.OneToOneField('sites.Site', related_name="tenant_site")
-
-    objects = SingleTenantModelManager()
+    site = models.OneToOneField(Site, related_name="tenant_site")
 
     def __str__(self):
         return '%s - %s' % (self.tenant.name, self.site.domain)
@@ -66,11 +71,11 @@ class TenantSite(TimeStampedModel):
 
 class TenantRelationship(TimeStampedModel):
     tenant = models.ForeignKey('Tenant', related_name="relationships")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="relationships")
+    user = models.ForeignKey(django_settings.AUTH_USER_MODEL, related_name="relationships")
     groups = models.ManyToManyField('auth.Group',
                                     related_name="user_tenant_groups")
     permissions = models.ManyToManyField('auth.Permission',
-                                        related_name="user_tenant_permissions")
+                                         related_name="user_tenant_permissions")
 
     def __str__(self):
         groups_str = ', '.join([g.name for g in self.groups.all()])

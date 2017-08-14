@@ -1,14 +1,8 @@
-from django.dispatch import receiver
-from django.db.models.signals import pre_save, post_save
 from django.contrib.sites.models import Site
-
-from shared_schema_tenants.models import Tenant
-
 from shared_schema_tenants.settings import DEFAULT_SITE_DOMAIN
 
-@receiver(post_save, sender=Tenant)
 def creates_default_site(sender, instance, created, *args, **kwargs):
-    if not created:
+    if created:
         try:
             site = Site.objects.get(domain__icontains=DEFAULT_SITE_DOMAIN,
                                     tenant_site__tenant=instance)
