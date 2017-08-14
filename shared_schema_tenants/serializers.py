@@ -8,14 +8,6 @@ from shared_schema_tenants.models import (Tenant, TenantSite, TenantRelationship
 
 from shared_schema_tenants.helpers.tenants import create_default_tenant_groups
 
-try:
-   from allauth.account import app_settings as allauth_settings
-   from allauth.utils import (email_address_exists,
-                              get_username_max_length)
-   from allauth.account.adapter import get_adapter
-except ImportError:
-   raise ImportError('allauth needs to be added to INSTALLED_APPS.')
-
 from shared_schema_tenants.helpers import (
     TenantSettingsHelper, TenantExtraDataHelper)
 
