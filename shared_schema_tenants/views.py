@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from rest_framework import generics, permissions, mixins, filters, status
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from django.db import transaction
 
@@ -8,7 +7,7 @@ from shared_schema_tenants.permissions import DjangoTenantModelPermission
 from shared_schema_tenants.models import *
 from shared_schema_tenants.utils import import_class
 from shared_schema_tenants.settings import (
-    TENANT_SERIALIZER, TENANT_SITE_SERIALIZER, 
+    TENANT_SERIALIZER, TENANT_SITE_SERIALIZER,
     TENANT_SETTINGS_SERIALIZER)
 from shared_schema_tenants.helpers.tenants import get_current_tenant
 
@@ -41,7 +40,7 @@ class TenantDetailsView(generics.RetrieveUpdateDestroyAPIView):
         else:
             return Tenant.objects.none()
 
-    
+
     def get_object(self):
         return get_current_tenant()
 
