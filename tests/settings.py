@@ -28,6 +28,10 @@ INSTALLED_APPS = [
 SITE_ID = 1
 
 if django.VERSION >= (1, 10):
-    MIDDLEWARE = ()
+    MIDDLEWARE = (
+        'shared_schema_tenants.middleware.TenantMiddleware',
+    )
 else:
-    MIDDLEWARE_CLASSES = ()
+    MIDDLEWARE_CLASSES = (
+        'shared_schema_tenants.middleware.TenantMiddleware',
+    )
