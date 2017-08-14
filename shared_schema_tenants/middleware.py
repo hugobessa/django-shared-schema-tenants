@@ -1,6 +1,7 @@
 from django.utils.functional import SimpleLazyObject
 import threading
 from shared_schema_tenants.settings import TENANT_HTTP_HEADER
+from shared_schema_tenants.models import Tenant, TenantSite
 
 def get_tenant(request):
     if not hasattr(request, '_cached_tenant'):
@@ -30,7 +31,10 @@ class TenantMiddleware(object):
 
     @classmethod
     def get_current_tenant(cls):
-        return cls._threadmap[threading.get_ident()]
+        try:
+            return cls._threadmap[threading.get_ident()]
+        except KeyError:
+            return None
 
     @classmethod
     def set_tenant(cls, tenant_slug):
