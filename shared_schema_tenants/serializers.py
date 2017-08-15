@@ -1,6 +1,7 @@
 from django.db import transaction
 from django.utils.text import ugettext_lazy as _
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 
 from rest_framework import serializers
 
@@ -13,6 +14,7 @@ from shared_schema_tenants.helpers import (
 
 
 class TenantSerializer(serializers.ModelSerializer):
+    extra_data = serializers.JSONField()
 
     class Meta:
         model = Tenant
@@ -20,8 +22,12 @@ class TenantSerializer(serializers.ModelSerializer):
 
     def validate_extra_data(self, extra_data):
         extra_data_helper = TenantExtraDataHelper()
-        return extra_data_helper.validate_fields(
-                    self.context, extra_data)
+        try:
+            validated_extra_data = extra_data_helper.validate_fields(self.context, extra_data)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
+        return extra_data
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -36,8 +42,10 @@ class TenantSerializer(serializers.ModelSerializer):
         instance.name = validated_data.get('name', instance.name)
         instance.slug = validated_data.get('slug', instance.slug)
 
+        extra_data_helper = TenantExtraDataHelper(instance=instance)
         instance = extra_data_helper.update_fields(
                 validated_data.get('extra_data', {}), commit=False)
+
 
         instance.save()
 

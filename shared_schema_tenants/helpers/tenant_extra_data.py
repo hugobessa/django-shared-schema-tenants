@@ -1,5 +1,5 @@
 from shared_schema_tenants.settings import (
-    DEFAULT_TENANT_EXTRA_DATA_FIELDS)
+    DEFAULT_TENANT_EXTRA_DATA_FIELDS, DEFAULT_TENANT_EXTRA_DATA)
 
 from django.conf import settings
 
@@ -7,8 +7,8 @@ from shared_schema_tenants.helpers.tenant_json_field import TenantJSONFieldHelpe
 
 
 class TenantExtraDataHelper(TenantJSONFieldHelper):
-    TENANT_FIELDS = getattr(settings, 'TENANT_EXTRA_DATA_FIELDS',
-                            DEFAULT_TENANT_EXTRA_DATA_FIELDS)
+    TENANT_FIELDS = DEFAULT_TENANT_EXTRA_DATA_FIELDS
+    TENANT_DEFAULT_FIELDS_VALUES = DEFAULT_TENANT_EXTRA_DATA
 
     def __init__(self, instance=None):
         super(TenantExtraDataHelper, self).__init__(

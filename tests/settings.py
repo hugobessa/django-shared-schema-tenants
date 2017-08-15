@@ -23,9 +23,32 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sites",
     "shared_schema_tenants",
+    "rest_framework",
 ]
 
 SITE_ID = 1
+
+
+def is_url(context, value, original_value):
+    from django.core.validators import URLValidator
+    from django.core.exceptions import ValidationError
+    from django.utils.text import ugettext_lazy as _
+    validate_url = URLValidator()
+    try:
+        validate_url(value)
+    except ValidationError as e:
+        raise ValidationError(_('This field must be a valid url'))
+    return value
+
+SHARED_SCHEMA_TENANTS = {
+    "DEFAULT_TENANT_EXTRA_DATA_FIELDS": {
+        'logo': {
+            'type': 'string',
+            'default': None,
+            'validators': [is_url,],
+        },
+    },
+}
 
 if django.VERSION >= (1, 10):
     MIDDLEWARE = (
