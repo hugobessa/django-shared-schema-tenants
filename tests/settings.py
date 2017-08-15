@@ -58,3 +58,5 @@ else:
     MIDDLEWARE_CLASSES = (
         'shared_schema_tenants.middleware.TenantMiddleware',
     )
+
+# force travis build
