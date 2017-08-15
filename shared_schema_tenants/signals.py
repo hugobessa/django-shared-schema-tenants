@@ -2,7 +2,7 @@ from django.contrib.sites.models import Site
 from shared_schema_tenants.settings import DEFAULT_SITE_DOMAIN
 
 def creates_default_site(sender, instance, created, *args, **kwargs):
-    if created:
+    if not created:
         try:
             site = Site.objects.get(domain__icontains=DEFAULT_SITE_DOMAIN,
                                     tenant_site__tenant=instance)
