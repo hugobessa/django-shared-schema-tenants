@@ -38,13 +38,7 @@ DEFAULT_TENANT_SETTINGS = {key: value.get('default')
 
 DEFAULT_TENANT_EXTRA_DATA_FIELDS = tenant_settings.get(
     'DEFAULT_TENANT_EXTRA_DATA_FIELDS',
-    {
-        'logo': {
-            'type': 'string',
-            'default': None,
-            'validators': [],
-        }
-    })
+    {})
 
 DEFAULT_TENANT_EXTRA_DATA = {key: value.get('default')
                              for key, value
