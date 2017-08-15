@@ -1,5 +1,11 @@
+import platform
+
+if platform.python_version_tuple()[0] == '2':
+    import thread as threading
+else:
+    import threading
+
 from django.utils.functional import SimpleLazyObject
-import threading
 from shared_schema_tenants.settings import TENANT_HTTP_HEADER
 from shared_schema_tenants.models import Tenant, TenantSite
 
@@ -39,7 +45,7 @@ class TenantMiddleware(object):
     @classmethod
     def set_tenant(cls, tenant_slug):
         cls._threadmap[threading.get_ident()] = SimpleLazyObject(
-                                                    lambda: Tenant.objects.get(slug=tenant_slug))
+            lambda: Tenant.objects.get(slug=tenant_slug))
 
     def process_request(self, request):
         request.tenant = SimpleLazyObject(lambda: get_tenant(request))
