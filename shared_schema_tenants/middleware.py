@@ -1,18 +1,16 @@
 import platform
+from django.utils.functional import SimpleLazyObject
+from shared_schema_tenants.settings import TENANT_HTTP_HEADER
+from shared_schema_tenants.models import Tenant, TenantSite
 
 if platform.python_version_tuple()[0] == '2':
     import thread as threading
 else:
     import threading
 
-from django.utils.functional import SimpleLazyObject
-from shared_schema_tenants.settings import TENANT_HTTP_HEADER
-from shared_schema_tenants.models import Tenant, TenantSite
 
 def get_tenant(request):
     if not hasattr(request, '_cached_tenant'):
-        from shared_schema_tenants.models import Tenant, TenantSite
-
         try:
             request._cached_tenant = request.site.tenant_site.tenant
             return request._cached_tenant
@@ -23,9 +21,15 @@ def get_tenant(request):
             tenant_http_header = 'HTTP_' + TENANT_HTTP_HEADER.replace('-', '_').upper()
             request._cached_tenant = Tenant.objects.get(slug=request.META[tenant_http_header])
         except LookupError:
-            request._cached_tenant = None
+            lazy_tenant = TenantMiddleware.get_current_tenant()
+            if not lazy_tenant:
+                return None
+
+            lazy_tenant._setup()
+            request._cached_tenant = lazy_tenant._wrapped
 
     return request._cached_tenant
+
 
 class TenantMiddleware(object):
     _threadmap = {}
