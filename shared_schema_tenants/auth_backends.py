@@ -1,14 +1,15 @@
+import logging
 from django.contrib.auth.models import Permission
 from django.contrib.auth.backends import ModelBackend
-
 from django.contrib.auth import get_user_model
+
+from shared_schema_tenants.models import TenantRelationship
+from shared_schema_tenants.helpers.tenants import get_current_tenant
+
+
 UserModel = get_user_model()
 
-import logging
 logger = logging.getLogger(__name__)
-
-from shared_schema_tenants.models import Tenant, TenantRelationship
-from shared_schema_tenants.helpers.tenants import get_current_tenant
 
 
 class TenantModelBackend(ModelBackend):
@@ -32,7 +33,8 @@ class TenantModelBackend(ModelBackend):
         `_get_group_permissions` or `_get_user_permissions` respectively.
         """
         tenant = get_current_tenant()
-        if tenant == None: return set()
+        if not tenant:
+            return set()
 
         if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
             return set()
@@ -56,14 +58,13 @@ class TenantModelBackend(ModelBackend):
                     "%s.%s" % (ct, name) for ct, name in perms})
         return getattr(tenant_relationship, perm_cache_name)
 
-
-
     def get_all_permissions(self, user_obj, obj=None):
         if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
             return set()
         try:
             tenant = get_current_tenant()
-            if tenant == None: return set()
+            if not tenant:
+                return set()
             relationship = TenantRelationship.objects.get(
                 user=user_obj, tenant=tenant)
         except TenantRelationship.DoesNotExist:
@@ -113,14 +114,14 @@ try:
 
                 if user.check_password(password):
                     tenant = get_current_tenant()
-                    if tenant == None: return set()
+                    if not tenant:
+                        return set()
                     if (user.relationships.filter(tenant=tenant).exists()
                             or user.is_superuser):
                         return user
                 return None
             except User.DoesNotExist:
                 return None
-
 
         def _authenticate_by_email(self, **credentials):
             # Even though allauth will pass along `email`, other apps may
@@ -133,7 +134,8 @@ try:
                 for user in filter_users_by_email(email):
                     if user.check_password(credentials["password"]):
                         tenant = get_current_tenant()
-                        if tenant == None: return set()
+                        if not tenant:
+                            return set()
                         if (user.relationships.filter(tenant=tenant).exists()
                                 or user.is_superuser):
                             return user

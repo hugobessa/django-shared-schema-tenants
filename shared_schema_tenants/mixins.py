@@ -5,7 +5,6 @@ from shared_schema_tenants.models import Tenant
 
 
 def get_default_tenant():
-    from shared_schema_tenants.models import Tenant
     return Tenant.objects.filter(slug=DEFAULT_TENANT_SLUG).first()
 
 

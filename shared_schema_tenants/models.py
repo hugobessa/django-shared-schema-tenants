@@ -1,17 +1,15 @@
 from django.db import models
 from django.conf import settings as django_settings
-from django.contrib.auth.signals import user_logged_in
 from django.contrib.sites.models import Site
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import post_save
 
 
 import json
 
 from model_utils.models import TimeStampedModel
 
-from shared_schema_tenants.exceptions import TenantNotFoundError
 from shared_schema_tenants.managers import (
-    SingleTenantModelManager, MultipleTenantModelManager)
+    SingleTenantModelManager)
 from shared_schema_tenants.settings import DEFAULT_TENANT_SETTINGS, DEFAULT_TENANT_EXTRA_DATA
 from shared_schema_tenants.validators import validate_json
 from shared_schema_tenants.signals import creates_default_site
@@ -64,6 +62,8 @@ post_save.connect(creates_default_site, sender=Tenant)
 class TenantSite(TimeStampedModel):
     tenant = models.ForeignKey('Tenant', related_name="tenant_sites")
     site = models.OneToOneField(Site, related_name="tenant_site")
+
+    objects = SingleTenantModelManager
 
     def __str__(self):
         return '%s - %s' % (self.tenant.name, self.site.domain)

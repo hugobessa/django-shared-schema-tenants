@@ -27,6 +27,7 @@ class SingleTenantModelManager(Manager):
         else:
             return super().create(tenant=tenant, *args, **kwargs)
 
+
 class MultipleTenantModelManager(Manager):
 
     def get_queryset(self, tenant=None):

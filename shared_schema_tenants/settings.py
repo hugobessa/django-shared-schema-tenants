@@ -4,31 +4,30 @@ tenant_settings = getattr(settings, 'SHARED_SCHEMA_TENANTS', {})
 
 
 TENANT_SERIALIZER = (tenant_settings
-                        .get('SERIALIZERS', {})
-                        .get('TENANT_SERIALIZER',
-                             'shared_schema_tenants.serializers.TenantSerializer'))
+                     .get('SERIALIZERS', {})
+                     .get('TENANT_SERIALIZER',
+                          'shared_schema_tenants.serializers.TenantSerializer'))
 
 
 TENANT_SITE_SERIALIZER = (tenant_settings
-                            .get('SERIALIZERS', {})
-                            .get('TENANT_SITE_SERIALIZER',
-                                'shared_schema_tenants.serializers.TenantSiteSerializer'))
+                          .get('SERIALIZERS', {})
+                          .get('TENANT_SITE_SERIALIZER',
+                               'shared_schema_tenants.serializers.TenantSiteSerializer'))
 
 TENANT_SETTINGS_SERIALIZER = (tenant_settings
-                            .get('SERIALIZERS', {})
-                            .get('TENANT_SETTINGS_SERIALIZER',
-                                'shared_schema_tenants.serializers.TenantSettingsSerializer'))
+                              .get('SERIALIZERS', {})
+                              .get('TENANT_SETTINGS_SERIALIZER',
+                                   'shared_schema_tenants.serializers.TenantSettingsSerializer'))
 
 TENANT_RELATIONSHIP_SERIALIZER = (
     tenant_settings
-        .get('SERIALIZERS', {})
-        .get('TENANT_SITE_SERIALIZER',
-            'shared_schema_tenants.serializers.TenantSiteSerializer'))
-
+    .get('SERIALIZERS', {})
+    .get('TENANT_SITE_SERIALIZER',
+         'shared_schema_tenants.serializers.TenantSiteSerializer'))
 
 
 DEFAULT_TENANT_SETTINGS_FIELDS = tenant_settings.get(
-                                  'DEFAULT_TENANT_SETTINGS_FIELDS', {})
+    'DEFAULT_TENANT_SETTINGS_FIELDS', {})
 
 
 DEFAULT_TENANT_SETTINGS = {key: value.get('default')

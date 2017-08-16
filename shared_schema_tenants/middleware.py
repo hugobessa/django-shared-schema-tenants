@@ -38,7 +38,6 @@ class TenantMiddleware(object):
         self.get_response = get_response
         # One-time configuration and initialization.
 
-
     @classmethod
     def get_current_tenant(cls):
         try:
