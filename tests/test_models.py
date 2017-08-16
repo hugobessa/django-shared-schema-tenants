@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-test_django-shared-schema-tenants
+test_models
 ------------
 
 Tests for `django-shared-schema-tenants` models module.
