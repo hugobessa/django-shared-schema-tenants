@@ -1,8 +1,6 @@
 from shared_schema_tenants.settings import (
     DEFAULT_TENANT_EXTRA_DATA_FIELDS, DEFAULT_TENANT_EXTRA_DATA)
 
-from django.conf import settings
-
 from shared_schema_tenants.helpers.tenant_json_field import TenantJSONFieldHelper
 
 
