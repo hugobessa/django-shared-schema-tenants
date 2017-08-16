@@ -63,7 +63,7 @@ class TenantJSONFieldHelper(object):
             })
 
         if tenant_fields[key].get('required', True):
-            if not value or value == '':
+            if value == None or value == '':  # noqa
                 raise ValidationError({
                     key: [
                         _('This field is required')

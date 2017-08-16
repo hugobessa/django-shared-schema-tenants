@@ -45,7 +45,7 @@ SHARED_SCHEMA_TENANTS = {
         'logo': {
             'type': 'string',
             'default': None,
-            'validators': [is_url,],
+            'validators': [is_url],
         },
         'number_of_employees': {
             'type': 'number',
@@ -54,6 +54,12 @@ SHARED_SCHEMA_TENANTS = {
         'is_non_profit': {
             'type': 'boolean',
             'default': False,
+        },
+    },
+    "DEFAULT_TENANT_SETTINGS_FIELDS": {
+        'notify_users_by_email': {
+            'type': 'boolean',
+            'default': True
         },
     },
 }

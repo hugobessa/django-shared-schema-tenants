@@ -53,12 +53,26 @@ class TenantSerializer(serializers.ModelSerializer):
 
 class TenantSettingsSerializer(serializers.Serializer):
 
-    def to_internal_value(self, data):
+    def is_valid(self, raise_exception=False):
         settings_helper = TenantSettingsHelper()
-        validated_data = settings_helper.validate_fields(self.context, data, self.partial)
-        settings_helper.update_fields(validated_data, partial=self.partial)
-        self.instance.refresh_from_db()
-        return self.instance
+        try:
+            self._validated_data = settings_helper.validate_fields(
+                self.context, self.initial_data, self.partial)
+        except ValidationError as exc:
+            self._validated_data = {}
+            self._errors = exc.detail
+        else:
+            self._errors = {}
+
+        if self._errors and raise_exception:
+            raise ValidationError(self.errors)
+
+        return not bool(self._errors)
+
+    def create(self, validated_data):
+        settings_helper = TenantSettingsHelper()
+        instance = settings_helper.update_fields(self.validated_data, partial=self.partial)
+        return instance
 
     def to_representation(self, obj):
         return obj.settings
