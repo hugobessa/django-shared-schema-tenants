@@ -47,6 +47,14 @@ SHARED_SCHEMA_TENANTS = {
             'default': None,
             'validators': [is_url,],
         },
+        'number_of_employees': {
+            'type': 'number',
+            'default': 0,
+        },
+        'is_non_profit': {
+            'type': 'boolean',
+            'default': False,
+        },
     },
 }
 

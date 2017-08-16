@@ -23,7 +23,8 @@ class TenantSerializer(serializers.ModelSerializer):
     def validate_extra_data(self, extra_data):
         extra_data_helper = TenantExtraDataHelper()
         try:
-            validated_extra_data = extra_data_helper.validate_fields(self.context, extra_data)
+            validated_extra_data = extra_data_helper.validate_fields(
+                self.context, extra_data, partial=self.partial)
         except ValidationError as e:
             raise serializers.ValidationError(e.message_dict)
 

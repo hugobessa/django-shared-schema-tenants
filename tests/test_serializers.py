@@ -23,7 +23,9 @@ class TenantSerializerTests(TestCase):
             'slug': 'test-2',
             'extra_data': {
                 "logo": "https://www.google.com.br/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
-            }
+                "is_non_profit": True,
+                "number_of_employees": 7,
+            },
         }
 
     def test_list(self):
@@ -65,7 +67,13 @@ class TenantSerializerTests(TestCase):
         self.params['extra_data'] = {}
         serializer = TenantSerializer(data=self.params, context={'request': request})
         self.assertFalse(serializer.is_valid())
-        self.assertDictEqual(serializer.errors, {'extra_data': {'logo': ['This field is required']}})
+        self.assertDictEqual(serializer.errors, {
+            'extra_data': {
+                'is_non_profit': ['This field is required'],
+                'logo': ['This field is required'],
+                'number_of_employees': ['This field is required'],
+            }
+        })
 
     def test_update(self):
         tenant = self.tenants[0]
@@ -79,3 +87,14 @@ class TenantSerializerTests(TestCase):
         self.assertEqual(tenant.name, self.params['name'])
         self.assertEqual(tenant.slug, self.params['slug'])
         self.assertEqual(tenant.extra_data, self.params['extra_data'])
+
+    def test_partial_update(self):
+        tenant = self.tenants[0]
+        serializer = TenantSerializer(tenant, data={"extra_data": {"number_of_employees": 10}}, partial=True)
+
+        self.assertTrue(serializer.is_valid())
+        serializer.save()
+
+        tenant.refresh_from_db()
+
+        self.assertEqual(tenant.extra_data['number_of_employees'], 10)

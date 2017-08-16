@@ -86,11 +86,23 @@ class TenantJSONFieldHelper(object):
                 raise ValidationError({key: [e]})
         return value
 
-    def validate_fields(self, context, data):
+    def validate_fields(self, context, data, partial=False):
+        errors = {}
+        has_errors = False
         for key in self.get_tenant_fields().keys():
             value = data.get(key)
-            data[key] = self.validate_field(
-                context, key, value, self.get_field(self.tenant, key))
+            if value == None and partial:
+                continue
+
+            try:
+                data[key] = self.validate_field(
+                    context, key, value, self.get_field(self.tenant, key))
+            except ValidationError as e:
+                has_errors = True
+                errors = dict(errors, **e.message_dict)
+
+        if has_errors:
+            raise ValidationError(errors)
 
         return data
 
@@ -99,10 +111,7 @@ class TenantJSONFieldHelper(object):
             setattr(
                 self.instance,
                 self.instance_field_name,
-                dict(
-                    self.get_tenant_default_fields_values(),
-                    **validated_data
-                )
+                validated_data
             )
         else:
             setattr(
