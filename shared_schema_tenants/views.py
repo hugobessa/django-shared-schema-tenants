@@ -1,10 +1,8 @@
-from django.shortcuts import render
-from rest_framework import generics, permissions, mixins, filters, status
-from rest_framework.views import APIView
+from rest_framework import generics, views, response, status
 from django.db import transaction
 
 from shared_schema_tenants.permissions import DjangoTenantModelPermission
-from shared_schema_tenants.models import *
+from shared_schema_tenants.models import Tenant, TenantSite
 from shared_schema_tenants.utils import import_class
 from shared_schema_tenants.settings import (
     TENANT_SERIALIZER, TENANT_SITE_SERIALIZER,
@@ -40,21 +38,29 @@ class TenantDetailsView(generics.RetrieveUpdateDestroyAPIView):
         else:
             return Tenant.objects.none()
 
-
     def get_object(self):
         return get_current_tenant()
 
 
-class TenantSettingsDetailsView(generics.RetrieveUpdateAPIView):
+class TenantSettingsDetailsView(views.APIView):
     serializer_class = TenantSettingsSerializer
     permission_classes = [DjangoTenantModelPermission]
 
-    def get_queryset(self):
-        if self.request.user.is_authenticated:
-            return Tenant.objects.filter(
-                relationships__user=self.request.user).distinct()
-        else:
-            return Tenant.objects.none()
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer_class(
+            self.request.tenant,
+            context={'request': request, 'view': self})
+        return response.Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer_class(
+            data=self.request.data,
+            context={'request': request, 'view': self})
+
+        if serializer.is_valid():
+            return response.Response(serializer.data, status=status.HTTP_200_OK)
+
+        return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TenantSiteListView(generics.ListCreateAPIView):
@@ -71,7 +77,7 @@ class TenantSiteListView(generics.ListCreateAPIView):
         return super().get_serializer(*args, **kwargs)
 
 
-class TenantSiteDetailsView(generics.RetrieveDestroyAPIView):
+class TenantSiteDetailsView(generics.DestroyAPIView):
     serializer_class = TenantSiteSerializer
     permission_classes = [DjangoTenantModelPermission]
 
