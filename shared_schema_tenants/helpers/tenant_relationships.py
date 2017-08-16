@@ -1,5 +1,5 @@
-from django.contrib.auth.models import Group, Permission
 from django.db import transaction
+from shared_schema_tenants.models import TenantRelationship
 
 
 def create_relationship(tenant, user, groups=[], permissions=[]):
