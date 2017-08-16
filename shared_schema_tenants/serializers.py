@@ -5,10 +5,9 @@ from django.core.exceptions import ValidationError
 
 from rest_framework import serializers
 
-from shared_schema_tenants.models import (Tenant, TenantSite, TenantRelationship)
-
-from shared_schema_tenants.helpers.tenants import create_default_tenant_groups
-
+from shared_schema_tenants.models import (Tenant, TenantSite)
+from shared_schema_tenants.helpers.tenants import (
+    create_default_tenant_groups, get_current_tenant)
 from shared_schema_tenants.helpers import (
     TenantSettingsHelper, TenantExtraDataHelper)
 
@@ -27,8 +26,8 @@ class TenantSerializer(serializers.ModelSerializer):
                 self.context, extra_data, partial=self.partial)
         except ValidationError as e:
             raise serializers.ValidationError(e.message_dict)
-
-        return extra_data
+        else:
+            return validated_extra_data
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -45,8 +44,7 @@ class TenantSerializer(serializers.ModelSerializer):
 
         extra_data_helper = TenantExtraDataHelper(instance=instance)
         instance = extra_data_helper.update_fields(
-                validated_data.get('extra_data', {}), commit=False)
-
+            validated_data.get('extra_data', {}), commit=False)
 
         instance.save()
 
@@ -56,21 +54,21 @@ class TenantSerializer(serializers.ModelSerializer):
 class TenantSettingsSerializer(serializers.Serializer):
 
     def to_internal_value(self, data):
-        helper = TenantSettingsHelper()
-        validated_data = helper.validate_settings(self.context, data)
-        helper.update_settings(validated_data, partial=True)
-        return helper.get_instance()
+        settings_helper = TenantSettingsHelper()
+        validated_data = settings_helper.validate_fields(self.context, data, self.partial)
+        settings_helper.update_fields(validated_data, partial=self.partial)
+        self.instance.refresh_from_db()
+        return self.instance
 
     def to_representation(self, obj):
         return obj.settings
 
 
 class TenantSiteSerializer(serializers.Serializer):
-    tenant = serializers.PrimaryKeyRelatedField(queryset=Tenant.objects.all())
     domain = serializers.CharField(required=True)
 
     def to_representation(self, instance):
-        return {'domain': instance.site.domain}
+        return {'id': instance.id, 'domain': instance.site.domain}
 
     def validate_domain(self, domain):
         if Site.objects.filter(domain=domain).exists():
@@ -81,7 +79,7 @@ class TenantSiteSerializer(serializers.Serializer):
         return domain
 
     def create(self, validated_data):
-        tenant = validated_data['tenant']
+        tenant = get_current_tenant()
         domain = validated_data['domain']
 
         with transaction.atomic():
