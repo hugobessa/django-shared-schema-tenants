@@ -17,7 +17,7 @@ class TenantJSONFieldHelper(object):
     TENANT_DEFAULT_FIELDS_VALUES = {}
 
     def __init__(self, instance_field_name, instance=None):
-        if instance == None:
+        if not instance:
             instance = get_current_tenant()
 
         self.instance = instance
@@ -63,13 +63,12 @@ class TenantJSONFieldHelper(object):
             })
 
         if tenant_fields[key].get('required', True):
-            if value == None or value == '':
+            if not value or value == '':
                 raise ValidationError({
                     key: [
                         _('This field is required')
                     ]
                 })
-
 
             if type(value) not in self.TYPES_TO_INTERNAL_MAP[field_type]:
                 raise ValidationError({
@@ -91,7 +90,7 @@ class TenantJSONFieldHelper(object):
         has_errors = False
         for key in self.get_tenant_fields().keys():
             value = data.get(key)
-            if value == None and partial:
+            if not value and partial:
                 continue
 
             try:
