@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings as django_settings
 from django.contrib.sites.models import Site
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete
 
 
 import json
@@ -56,8 +56,6 @@ class Tenant(TimeStampedModel):
     def __str__(self):
         return self.name
 
-post_save.connect(creates_default_site, sender=Tenant)
-
 
 class TenantSite(TimeStampedModel):
     tenant = models.ForeignKey('Tenant', related_name="tenant_sites")
@@ -69,13 +67,21 @@ class TenantSite(TimeStampedModel):
         return '%s - %s' % (self.tenant.name, self.site.domain)
 
 
+def post_delete_tenant_site(sender, instance, *args, **kwargs):
+    if instance.site:
+        instance.site.delete()
+post_delete.connect(post_delete_tenant_site, sender=TenantSite)
+
+
 class TenantRelationship(TimeStampedModel):
     tenant = models.ForeignKey('Tenant', related_name="relationships")
     user = models.ForeignKey(django_settings.AUTH_USER_MODEL, related_name="relationships")
     groups = models.ManyToManyField('auth.Group',
-                                    related_name="user_tenant_groups")
+                                    related_name="user_tenant_groups",
+                                    blank=True)
     permissions = models.ManyToManyField('auth.Permission',
-                                         related_name="user_tenant_permissions")
+                                         related_name="user_tenant_permissions",
+                                         blank=True)
 
     def __str__(self):
         groups_str = ', '.join([g.name for g in self.groups.all()])
