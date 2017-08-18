@@ -22,7 +22,7 @@ class TenantTests(TestCase):
         tenant.save()
         TenantMiddleware.set_tenant(tenant)
         self.assertEqual(Tenant.objects.all().count(), 1)
-        self.assertEqual(tenant.tenant_sites.all().count(), 1)
+        self.assertEqual(tenant.tenant_sites.all().count(), 0)
 
 
 class TenantSiteTests(TestCase):
@@ -34,7 +34,7 @@ class TenantSiteTests(TestCase):
 
     def test_create(self):
         TenantSite.objects.create(tenant=self.tenant, site=self.site)
-        self.assertEqual(TenantSite.objects.all().count(), 2)
+        self.assertEqual(TenantSite.objects.all().count(), 1)
 
 
 class TenantRelationshipTests(TestCase):

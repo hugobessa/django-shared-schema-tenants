@@ -79,10 +79,13 @@ class TenantSettingsSerializer(serializers.Serializer):
 
 
 class TenantSiteSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
     domain = serializers.CharField(required=True)
 
     def to_representation(self, instance):
-        return {'id': instance.id, 'domain': instance.site.domain}
+        if instance:
+            return {'id': instance.id, 'domain': instance.site.domain}
+        return None
 
     def validate_domain(self, domain):
         if Site.objects.filter(domain=domain).exists():

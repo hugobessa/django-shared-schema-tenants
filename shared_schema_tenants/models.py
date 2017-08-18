@@ -12,7 +12,6 @@ from shared_schema_tenants.managers import (
     SingleTenantModelManager)
 from shared_schema_tenants.settings import DEFAULT_TENANT_SETTINGS, DEFAULT_TENANT_EXTRA_DATA
 from shared_schema_tenants.validators import validate_json
-from shared_schema_tenants.signals import creates_default_site
 
 
 class Tenant(TimeStampedModel):
