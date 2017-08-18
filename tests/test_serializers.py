@@ -109,19 +109,21 @@ class TenantSerializerTests(TestCase):
 class TenantSiteSerializerTests(TestCase):
 
     def setUp(self):
-        self.tenants = mommy.make('shared_schema_tenants.Tenant', _quantity=10)
+        self.tenant = mommy.make('shared_schema_tenants.Tenant')
         self.user = User.objects.create_user(
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',
             password='test')
+        self.tenant_site = mommy.make('shared_schema_tenants.TenantSite',
+                                      tenant=self.tenant)
 
         self.params = {
             'domain': 'sharedschematenants.com'
         }
-        TenantMiddleware.set_tenant(self.tenants[0].slug)
+        TenantMiddleware.set_tenant(self.tenant.slug)
 
     def test_serialize(self):
-        data = TenantSiteSerializer(TenantSite.objects.all().first()).data
+        data = TenantSiteSerializer(self.tenant_site).data
         keys = ['id', 'domain']
         try:
             self.assertCountEqual(data.keys(), keys)
