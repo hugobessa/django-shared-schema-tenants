@@ -58,27 +58,30 @@ class TenantModelBackend(ModelBackend):
         if not tenant:
             return set()
 
-        try:
-            relationship = TenantRelationship.objects.get(
-                user=user_obj, tenant=tenant)
-        except TenantRelationship.DoesNotExist:
-            return set()
+        perm_cache_name = '_tenant_%s_perm_cache' % from_name
 
-        perm_cache_name = '_%s_perm_cache' % from_name
-
-        if not hasattr(relationship, perm_cache_name):
-
+        if (not hasattr(user_obj, perm_cache_name) or
+                not getattr(user_obj, perm_cache_name).get(tenant.slug)):
             if user_obj.is_superuser:
                 relationship_perms = Permission.objects.all()
             else:
-                relationship_perms = getattr(self, '_get_%s_tenant_permissions' %
-                                             from_name)(relationship)
-            relationship_perms = relationship_perms.values_list(
-                'content_type__app_label', 'codename').order_by()
-            setattr(relationship, perm_cache_name, {
-                "%s.%s" % (ct, name) for ct, name in relationship_perms})
+                try:
+                    relationship = TenantRelationship.objects.get(
+                        user=user_obj, tenant=tenant)
+                except TenantRelationship.DoesNotExist:
+                    relationship_perms = set()
+                else:
+                    relationship_perms = getattr(self, '_get_%s_tenant_permissions' %
+                                                 from_name)(relationship)
+                    relationship_perms = relationship_perms.values_list(
+                        'content_type__app_label', 'codename').order_by()
+            setattr(user_obj, perm_cache_name, {
+                tenant.slug: {
+                    "%s.%s" % (ct, name) for ct, name in relationship_perms
+                }
+            })
 
-        return getattr(relationship, perm_cache_name)
+        return getattr(user_obj, perm_cache_name).get(tenant.slug)
 
     def _get_global_permissions(self, user_obj, obj, from_name):
         if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
@@ -127,20 +130,24 @@ class TenantModelBackend(ModelBackend):
         if not tenant:
             return set()
 
-        try:
-            relationship = TenantRelationship.objects.get(
-                user=user_obj, tenant=tenant)
-        except TenantRelationship.DoesNotExist:
-            return set()
-
-        if not hasattr(relationship, '_perm_cache'):
-            relationship._perm_cache = self.get_user_tenant_permissions(user_obj, obj)
-            relationship._perm_cache.update(self.get_group_tenant_permissions(user_obj, obj))
-        return relationship._perm_cache
+        if (not hasattr(user_obj, '_tenant_perm_cache') or
+                not getattr(user_obj, '_tenant_perm_cache').get(tenant.slug)):
+            try:
+                relationship = TenantRelationship.objects.get(
+                    user=user_obj, tenant=tenant)
+            except TenantRelationship.DoesNotExist:
+                if hasattr(user_obj, '_tenant_perm_cache'):
+                    relationship._tenant_perm_cache[tenant.slug] = set()
+                else:
+                    relationship._tenant_perm_cache = {tenant.slug: set()}
+            else:
+                relationship._tenant_perm_cache = {tenant.slug: self.get_user_tenant_permissions(user_obj, obj)}
+                relationship._tenant_perm_cache[tenant.slug].update(self.get_group_tenant_permissions(user_obj, obj))
+        return relationship._tenant_perm_cache[tenant.slug]
 
     def get_all_permissions(self, user_obj, obj=None):
         return dict(
-            self.get_all_global_permissions(user_obj, obj)
+            self.get_all_global_permissions(user_obj, obj),
             **self.get_all_tenant_permissions(user_obj, obj))
 
 
