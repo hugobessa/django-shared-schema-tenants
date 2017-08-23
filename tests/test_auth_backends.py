@@ -63,6 +63,18 @@ class TenantModelBackendTests(TestCase):
             self.user.relationships.first().groups.first().permissions.count()
         )
 
+    def test_get_all_permissions(self):
+        set_current_tenant(self.tenant.slug)
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend.get_all_permissions(self.user)),
+            self.user.relationships.first().groups.first().permissions.count()
+        )
+        self.assertEqual(
+            len(self.user._tenant_perm_cache[self.tenant.pk]),
+            self.user.relationships.first().groups.first().permissions.count()
+        )
+
     def test__get_group_tenant_permissions_without_tenant(self):
         clear_current_tenant()
         auth_backend = TenantModelBackend()
@@ -89,6 +101,42 @@ class TenantModelBackendTests(TestCase):
 
     def test_get_all_tenant_permissions_without_tenant(self):
         clear_current_tenant()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend.get_all_tenant_permissions(self.user)),
+            0
+        )
+
+    def test__get_group_tenant_permissions_without_active_user(self):
+        self.user.is_active = False
+        self.user.save()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_tenant_permissions(self.user, None, 'group')),
+            0
+        )
+
+    def test__get_user_tenant_permissions_without_active_user(self):
+        self.user.is_active = False
+        self.user.save()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_tenant_permissions(self.user, None, 'user')),
+            0
+        )
+
+    def test__get_permissions_without_active_user(self):
+        self.user.is_active = False
+        self.user.save()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_permissions(self.user, None, 'group')),
+            0
+        )
+
+    def test_get_all_tenant_permissions_without_active_user(self):
+        self.user.is_active = False
+        self.user.save()
         auth_backend = TenantModelBackend()
         self.assertEqual(
             len(auth_backend.get_all_tenant_permissions(self.user)),
