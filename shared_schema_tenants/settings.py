@@ -49,3 +49,14 @@ DEFAULT_SITE_DOMAIN = tenant_settings.get(
 )
 
 TENANT_HTTP_HEADER = tenant_settings.get('TENANT_HTTP_HEADER', 'Tenant-Slug')
+
+
+DEFAULT_TENANT_OWNER_PERMISSIONS = tenant_settings.get(
+    'DEFAULT_TENANT_OWNER_PERMISSIONS', [
+        'shared_schema_tenants.add_tenantsite',
+        'shared_schema_tenants.change_tenantsite',
+        'shared_schema_tenants.delete_tenantsite',
+        'shared_schema_tenants.add_tenantrelationship',
+        'shared_schema_tenants.delete_tenantrelationship',
+        'shared_schema_tenants.change_tenantrelationship',
+    ])
