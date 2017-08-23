@@ -61,7 +61,7 @@ class TenantModelBackend(ModelBackend):
         perm_cache_name = '_tenant_%s_perm_cache' % from_name
 
         if (not hasattr(user_obj, perm_cache_name) or
-                not getattr(user_obj, perm_cache_name).get(tenant.slug)):
+                not getattr(user_obj, perm_cache_name).get(tenant.pk)):
             if user_obj.is_superuser:
                 relationship_perms = Permission.objects.all()
             else:
@@ -76,12 +76,12 @@ class TenantModelBackend(ModelBackend):
                     relationship_perms = relationship_perms.values_list(
                         'content_type__app_label', 'codename').order_by()
             setattr(user_obj, perm_cache_name, {
-                tenant.slug: {
+                tenant.pk: {
                     "%s.%s" % (ct, name) for ct, name in relationship_perms
                 }
             })
 
-        return getattr(user_obj, perm_cache_name).get(tenant.slug)
+        return getattr(user_obj, perm_cache_name).get(tenant.pk)
 
     def _get_global_permissions(self, user_obj, obj, from_name):
         if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
@@ -98,9 +98,8 @@ class TenantModelBackend(ModelBackend):
         return getattr(user_obj, perm_cache_name)
 
     def _get_permissions(self, user_obj, obj, from_name):
-        return dict(
-            self._get_global_permissions(user_obj, obj, from_name),
-            **self._get_relationship_permissions(user_obj, obj, from_name))
+        return self._get_global_permissions(user_obj, obj, from_name).union(
+            self._get_tenant_permissions(user_obj, obj, from_name))
 
     def get_user_global_permissions(self, user_obj, obj=None):
         return self._get_global_permissions(user_obj, obj, 'user')
@@ -109,10 +108,10 @@ class TenantModelBackend(ModelBackend):
         return self._get_tenant_permissions(user_obj, obj, 'user')
 
     def get_group_global_permissions(self, user_obj, obj=None):
-        return self._get_global_permissions(user_obj, obj, 'user')
+        return self._get_global_permissions(user_obj, obj, 'group')
 
     def get_group_tenant_permissions(self, user_obj, obj=None):
-        return self._get_tenant_permissions(user_obj, obj, 'user')
+        return self._get_tenant_permissions(user_obj, obj, 'group')
 
     def get_all_global_permissions(self, user_obj, obj=None):
         if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
@@ -131,24 +130,14 @@ class TenantModelBackend(ModelBackend):
             return set()
 
         if (not hasattr(user_obj, '_tenant_perm_cache') or
-                not getattr(user_obj, '_tenant_perm_cache').get(tenant.slug)):
-            try:
-                relationship = TenantRelationship.objects.get(
-                    user=user_obj, tenant=tenant)
-            except TenantRelationship.DoesNotExist:
-                if hasattr(user_obj, '_tenant_perm_cache'):
-                    relationship._tenant_perm_cache[tenant.slug] = set()
-                else:
-                    relationship._tenant_perm_cache = {tenant.slug: set()}
-            else:
-                relationship._tenant_perm_cache = {tenant.slug: self.get_user_tenant_permissions(user_obj, obj)}
-                relationship._tenant_perm_cache[tenant.slug].update(self.get_group_tenant_permissions(user_obj, obj))
-        return relationship._tenant_perm_cache[tenant.slug]
+                not getattr(user_obj, '_tenant_perm_cache').get(tenant.pk)):
+            user_obj._tenant_perm_cache = {tenant.pk: self.get_user_tenant_permissions(user_obj, obj)}
+            user_obj._tenant_perm_cache[tenant.pk].update(self.get_group_tenant_permissions(user_obj, obj))
+        return user_obj._tenant_perm_cache[tenant.pk]
 
     def get_all_permissions(self, user_obj, obj=None):
-        return dict(
-            self.get_all_global_permissions(user_obj, obj),
-            **self.get_all_tenant_permissions(user_obj, obj))
+        return self.get_all_global_permissions(user_obj, obj).union(
+            self.get_all_tenant_permissions(user_obj, obj))
 
 
 try:

@@ -1,3 +1,3 @@
-from shared_schema_tenants.helpers.tenants import get_current_tenant, set_tenant
+from shared_schema_tenants.helpers.tenants import get_current_tenant, set_current_tenant
 from shared_schema_tenants.helpers.tenant_extra_data import TenantExtraDataHelper
 from shared_schema_tenants.helpers.tenant_settings import TenantSettingsHelper

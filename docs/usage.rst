@@ -88,12 +88,12 @@ You can force tenant selection using set\_tenant method.
 
 .. code:: python
 
-    from shared_schema_tenants.helpers import set_tenant
+    from shared_schema_tenants.helpers import set_current_tenant
 
     from .models import MyModel
 
     def my_function():
-        set_tenant('default')
+        set_current_tenant('default')
 
         return MyModel.objects.all() # return only the models with tenant__slug='default'
 
