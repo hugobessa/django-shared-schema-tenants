@@ -1,5 +1,5 @@
 from django.test import TestCase
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 
 from shared_schema_tenants.helpers.tenant_relationships import create_relationship
 from shared_schema_tenants.helpers.tenants import (
@@ -16,19 +16,19 @@ class TenantModelBackendTests(TestCase):
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',
             password='test')
-        create_relationship(self.tenant, self.user,
-                            groups=create_default_tenant_groups())
+        self.relationship = create_relationship(self.tenant, self.user,
+                                                groups=create_default_tenant_groups())
 
     def test__get_group_tenant_permissions(self):
         set_current_tenant(self.tenant.slug)
         auth_backend = TenantModelBackend()
         self.assertEqual(
             len(auth_backend._get_tenant_permissions(self.user, None, 'group')),
-            self.user.relationships.first().groups.first().permissions.count()
+            self.relationship.groups.first().permissions.count()
         )
         self.assertEqual(
             len(self.user._tenant_group_perm_cache[self.tenant.pk]),
-            self.user.relationships.first().groups.first().permissions.count()
+            self.relationship.groups.first().permissions.count()
         )
 
     def test__get_user_tenant_permissions(self):
@@ -36,11 +36,11 @@ class TenantModelBackendTests(TestCase):
         auth_backend = TenantModelBackend()
         self.assertEqual(
             len(auth_backend._get_tenant_permissions(self.user, None, 'user')),
-            self.user.relationships.first().permissions.count()
+            self.relationship.permissions.count()
         )
         self.assertEqual(
             len(self.user._tenant_user_perm_cache[self.tenant.pk]),
-            self.user.relationships.first().permissions.count()
+            self.relationship.permissions.count()
         )
 
     def test__get_permissions(self):
@@ -48,7 +48,7 @@ class TenantModelBackendTests(TestCase):
         auth_backend = TenantModelBackend()
         self.assertEqual(
             len(auth_backend._get_permissions(self.user, None, 'group')),
-            self.user.relationships.first().groups.first().permissions.count()
+            self.relationship.groups.first().permissions.count()
         )
 
     def test_get_all_tenant_permissions(self):
@@ -56,11 +56,11 @@ class TenantModelBackendTests(TestCase):
         auth_backend = TenantModelBackend()
         self.assertEqual(
             len(auth_backend.get_all_tenant_permissions(self.user)),
-            self.user.relationships.first().groups.first().permissions.count()
+            self.relationship.groups.first().permissions.count()
         )
         self.assertEqual(
             len(self.user._tenant_perm_cache[self.tenant.pk]),
-            self.user.relationships.first().groups.first().permissions.count()
+            self.relationship.groups.first().permissions.count()
         )
 
     def test_get_all_permissions(self):
@@ -68,11 +68,93 @@ class TenantModelBackendTests(TestCase):
         auth_backend = TenantModelBackend()
         self.assertEqual(
             len(auth_backend.get_all_permissions(self.user)),
-            self.user.relationships.first().groups.first().permissions.count()
+            self.relationship.groups.first().permissions.count()
         )
         self.assertEqual(
             len(self.user._tenant_perm_cache[self.tenant.pk]),
-            self.user.relationships.first().groups.first().permissions.count()
+            self.relationship.groups.first().permissions.count()
+        )
+
+    def test__get_user_permissions(self):
+        set_current_tenant(self.tenant.slug)
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_user_permissions(self.relationship)),
+            self.relationship.permissions.count()
+        )
+
+    def test__get_group_permissions(self):
+        set_current_tenant(self.tenant.slug)
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_group_permissions(self.relationship)),
+            self.relationship.groups.first().permissions.count()
+        )
+
+    def test__get_group_tenant_permissions_with_superuser(self):
+        set_current_tenant(self.tenant.slug)
+        self.user.is_superuser = True
+        self.user.save()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_tenant_permissions(self.user, None, 'group')),
+            Permission.objects.all().count()
+        )
+        self.assertEqual(
+            len(self.user._tenant_group_perm_cache[self.tenant.pk]),
+            Permission.objects.all().count()
+        )
+
+    def test__get_user_tenant_permissions_with_superuser(self):
+        set_current_tenant(self.tenant.slug)
+        self.user.is_superuser = True
+        self.user.save()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_tenant_permissions(self.user, None, 'user')),
+            Permission.objects.all().count()
+        )
+        self.assertEqual(
+            len(self.user._tenant_user_perm_cache[self.tenant.pk]),
+            Permission.objects.all().count()
+        )
+
+    def test__get_permissions_with_superuser(self):
+        set_current_tenant(self.tenant.slug)
+        self.user.is_superuser = True
+        self.user.save()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_permissions(self.user, None, 'group')),
+            Permission.objects.all().count()
+        )
+
+    def test_get_all_tenant_permissions_with_superuser(self):
+        set_current_tenant(self.tenant.slug)
+        self.user.is_superuser = True
+        self.user.save()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend.get_all_tenant_permissions(self.user)),
+            Permission.objects.all().count()
+        )
+        self.assertEqual(
+            len(self.user._tenant_perm_cache[self.tenant.pk]),
+            Permission.objects.all().count()
+        )
+
+    def test_get_all_permissions_with_superuser(self):
+        set_current_tenant(self.tenant.slug)
+        self.user.is_superuser = True
+        self.user.save()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend.get_all_permissions(self.user)),
+            Permission.objects.all().count()
+        )
+        self.assertEqual(
+            len(self.user._tenant_perm_cache[self.tenant.pk]),
+            Permission.objects.all().count()
         )
 
     def test__get_group_tenant_permissions_without_tenant(self):

@@ -35,10 +35,18 @@ class TenantModelBackend(ModelBackend):
         return Permission.objects.filter(**{relationship_groups_query: relationship})
 
     def _get_user_permissions(self, relationship):
+        relationship_permissions_field = TenantRelationship._meta.get_field('permissions')
+        relationship_permission_query = relationship_permissions_field.related_query_name()
+
+        user_permissions_field = UserModel._meta.get_field('user_permissions')
+        user_permission_query = user_permissions_field.related_query_name()
+
+        user_groups_field = get_user_model()._meta.get_field('groups')
+        user_groups_query = 'group__%s' % user_groups_field.related_query_name()
         return Permission.objects.filter(
-            Q(tenanrelationship_set=relationship) |
-            Q(user_set=relationship.user) |
-            Q(group_set__user_set=relationship.user)).distinct()
+            Q(**{relationship_permission_query: relationship}) |
+            Q(**{user_permission_query: relationship.user}) |
+            Q(**{user_groups_query: relationship.user})).distinct()
 
     def _get_group_permissions(self, relationship):
         relationship_groups_field = TenantRelationship._meta.get_field(
@@ -64,6 +72,8 @@ class TenantModelBackend(ModelBackend):
                 not getattr(user_obj, perm_cache_name).get(tenant.pk)):
             if user_obj.is_superuser:
                 relationship_perms = Permission.objects.all()
+                relationship_perms = relationship_perms.values_list(
+                    'content_type__app_label', 'codename').order_by()
             else:
                 try:
                     relationship = TenantRelationship.objects.get(
