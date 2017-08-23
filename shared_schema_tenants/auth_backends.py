@@ -51,7 +51,7 @@ class TenantModelBackend(ModelBackend):
             Q(**{user_groups_query: relationship.user}))
 
     def _get_tenant_permissions(self, user_obj, obj, from_name):
-        if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
+        if not user_obj.is_active or user_obj.is_anonymous() or obj is not None:
             return set()
 
         tenant = get_current_tenant()
@@ -84,7 +84,7 @@ class TenantModelBackend(ModelBackend):
         return getattr(user_obj, perm_cache_name).get(tenant.pk)
 
     def _get_global_permissions(self, user_obj, obj, from_name):
-        if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
+        if not user_obj.is_active or user_obj.is_anonymous() or obj is not None:
             return set()
 
         perm_cache_name = '_%s_perm_cache' % from_name
@@ -114,7 +114,7 @@ class TenantModelBackend(ModelBackend):
         return self._get_tenant_permissions(user_obj, obj, 'group')
 
     def get_all_global_permissions(self, user_obj, obj=None):
-        if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
+        if not user_obj.is_active or user_obj.is_anonymous() or obj is not None:
             return set()
         if not hasattr(user_obj, '_perm_cache'):
             user_obj._perm_cache = self.get_user_global_permissions(user_obj, obj)
@@ -122,7 +122,7 @@ class TenantModelBackend(ModelBackend):
         return user_obj._perm_cache
 
     def get_all_tenant_permissions(self, user_obj, obj=None):
-        if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
+        if not user_obj.is_active or user_obj.is_anonymous() or obj is not None:
             return set()
 
         tenant = get_current_tenant()
