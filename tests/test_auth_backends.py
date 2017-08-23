@@ -108,6 +108,7 @@ class TenantModelBackendTests(TestCase):
         )
 
     def test__get_group_tenant_permissions_without_active_user(self):
+        set_current_tenant(self.tenant.slug)
         self.user.is_active = False
         self.user.save()
         auth_backend = TenantModelBackend()
@@ -117,6 +118,7 @@ class TenantModelBackendTests(TestCase):
         )
 
     def test__get_user_tenant_permissions_without_active_user(self):
+        set_current_tenant(self.tenant.slug)
         self.user.is_active = False
         self.user.save()
         auth_backend = TenantModelBackend()
@@ -126,6 +128,7 @@ class TenantModelBackendTests(TestCase):
         )
 
     def test__get_permissions_without_active_user(self):
+        set_current_tenant(self.tenant.slug)
         self.user.is_active = False
         self.user.save()
         auth_backend = TenantModelBackend()
@@ -135,6 +138,7 @@ class TenantModelBackendTests(TestCase):
         )
 
     def test_get_all_tenant_permissions_without_active_user(self):
+        set_current_tenant(self.tenant.slug)
         self.user.is_active = False
         self.user.save()
         auth_backend = TenantModelBackend()
@@ -143,4 +147,48 @@ class TenantModelBackendTests(TestCase):
             0
         )
 
+    def test_get_all_permissions_without_active_user(self):
+        set_current_tenant(self.tenant.slug)
+        self.user.is_active = False
+        self.user.save()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend.get_all_permissions(self.user)),
+            0
+        )
 
+    def test__get_group_tenant_permissions_without_user_in_tenant(self):
+        set_current_tenant(self.tenant.slug)
+        self.user.relationships.all().delete()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_tenant_permissions(self.user, None, 'group')),
+            0
+        )
+
+    def test__get_user_tenant_permissions_without_user_in_tenant(self):
+        set_current_tenant(self.tenant.slug)
+        self.user.relationships.all().delete()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_tenant_permissions(self.user, None, 'user')),
+            0
+        )
+
+    def test__get_permissions_without_user_in_tenant(self):
+        set_current_tenant(self.tenant.slug)
+        self.user.relationships.all().delete()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend._get_permissions(self.user, None, 'group')),
+            0
+        )
+
+    def test_get_all_tenant_permissions_without_user_in_tenant(self):
+        set_current_tenant(self.tenant.slug)
+        self.user.relationships.all().delete()
+        auth_backend = TenantModelBackend()
+        self.assertEqual(
+            len(auth_backend.get_all_tenant_permissions(self.user)),
+            0
+        )
