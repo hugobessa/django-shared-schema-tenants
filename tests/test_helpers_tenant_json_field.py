@@ -10,7 +10,7 @@ from shared_schema_tenants.helpers.tenant_json_field import TenantJSONFieldHelpe
 class TenantJSONFieldHelperTests(SharedSchemaTenantsTestCase):
 
     def setUp(self):
-        super().setUp()
+        super(TenantJSONFieldHelperTests, self).setUp()
         self.tenant_json_field_helper = TenantJSONFieldHelper(
             instance_field_name='settings',
             tenant_fields={

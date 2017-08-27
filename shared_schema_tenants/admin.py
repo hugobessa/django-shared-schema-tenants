@@ -18,7 +18,7 @@ class TenantSiteForm(forms.ModelForm):
         fields = ['site', 'tenant']
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(TenantSiteForm, self).__init__(*args, **kwargs)
         if kwargs.get('instance'):
             self.initial['site'] = kwargs.get('instance').site.domain
 
@@ -46,7 +46,7 @@ class TenantSiteForm(forms.ModelForm):
                 delete_old_site = True
                 old_site = old_instance.site
 
-        instance = super().save(*args, **kwargs)
+        instance = super(TenantSiteForm, self).save(*args, **kwargs)
 
         if delete_old_site:
             old_site.delete()

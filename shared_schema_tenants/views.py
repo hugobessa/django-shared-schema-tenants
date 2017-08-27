@@ -74,7 +74,7 @@ class TenantSiteListView(generics.ListCreateAPIView):
         data = kwargs.get('data', {})
         data['tenant'] = get_current_tenant()
         kwargs['data'] = data
-        return super().get_serializer(*args, **kwargs)
+        return super(TenantSiteListView, self).get_serializer(*args, **kwargs)
 
 
 class TenantSiteDetailsView(generics.DestroyAPIView):
@@ -89,7 +89,7 @@ class TenantSiteDetailsView(generics.DestroyAPIView):
         site = tenant_site.site
 
         with transaction.atomic():
-            response = super().destroy(request, *args, **kwargs)
+            response = super(TenantSiteDetailsView, self).destroy(request, *args, **kwargs)
             site.delete()
 
         return response
