@@ -128,4 +128,4 @@ class TenantJSONFieldHelper(object):
         return self.instance
 
     def update_field(self, key, value, commit=True):
-        return self.update_fields({key: value}, partial=True, commit=True)
+        return self.update_fields({key: value}, partial=True, commit=commit)

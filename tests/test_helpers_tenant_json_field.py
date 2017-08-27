@@ -175,3 +175,55 @@ class TenantJSONFieldHelperTests(SharedSchemaTenantsTestCase):
             mock.call({}, 'number_of_employees', None,
                       self.tenant.settings.get('number_of_employees')),
         ])
+
+    def test_update_fields(self):
+        self.tenant_json_field_helper.update_fields({
+            'logo': 'http://test.url/image.jpg',
+            'number_of_employees': 10,
+            'is_non_profit': False,
+        })
+
+        self.tenant.refresh_from_db()
+
+        self.assertEqual(self.tenant.settings.get('logo'), 'http://test.url/image.jpg')
+        self.assertEqual(self.tenant.settings.get('number_of_employees'), 10)
+        self.assertEqual(self.tenant.settings.get('is_non_profit'), False)
+
+    def test_update_fields_without_commit(self):
+        self.tenant_json_field_helper.update_fields({
+            'logo': 'http://test.url/image.jpg',
+            'number_of_employees': 10,
+            'is_non_profit': False,
+        }, commit=False)
+
+        self.tenant.refresh_from_db()
+
+        self.assertNotEqual(self.tenant.settings.get('logo'), 'http://test.url/image.jpg')
+        self.assertNotEqual(self.tenant.settings.get('number_of_employees'), 10)
+        self.assertNotEqual(self.tenant.settings.get('is_non_profit'), False)
+
+    def test_update_fields_partial(self):
+        self.tenant_json_field_helper.update_fields({
+            'logo': 'http://test.url/image.jpg',
+        }, partial=True)
+
+        self.tenant.refresh_from_db()
+        self.assertEqual(self.tenant.settings.get('logo'), 'http://test.url/image.jpg')
+
+    @mock.patch('shared_schema_tenants.helpers.tenant_json_field.TenantJSONFieldHelper.update_fields')
+    def test_update_field_calls_update_fields_partial(self, update_fields):
+        self.tenant_json_field_helper.update_field('logo', 'http://test.url/image.jpg')
+
+        update_fields.assert_has_calls([
+            mock.call({'logo': 'http://test.url/image.jpg'}, partial=True, commit=True)
+        ])
+
+    @mock.patch('shared_schema_tenants.helpers.tenant_json_field.TenantJSONFieldHelper.update_fields')
+    def test_update_field_without_commit_calls_update_fields_partial_without_commit(self, update_fields):
+        self.tenant_json_field_helper.update_field('logo', 'http://test.url/image.jpg', commit=False)
+
+        update_fields.assert_has_calls([
+            mock.call({'logo': 'http://test.url/image.jpg'}, partial=True, commit=False)
+        ])
+
+
