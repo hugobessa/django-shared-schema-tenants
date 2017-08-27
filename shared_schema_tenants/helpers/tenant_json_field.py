@@ -13,29 +13,32 @@ class TenantJSONFieldHelper(object):
         'object': [dict],
     }
 
-    TENANT_FIELDS = {}
-    TENANT_DEFAULT_FIELDS_VALUES = {}
-
-    def __init__(self, instance_field_name, instance=None):
+    def __init__(self, instance_field_name, instance=None,
+                 tenant_fields={}, tenant_default_fields_values={}):
         if not instance:
             instance = get_current_tenant()
 
         self.instance = instance
         self.instance_field_name = instance_field_name
         self.tenant = get_current_tenant()
+        self.tenant_fields = tenant_fields
+        self.tenant_default_fields_values = tenant_default_fields_values
 
     def get_tenant_fields(self):
-        return getattr(self, 'TENANT_FIELDS', {})
+        return getattr(self, 'tenant_fields', {})
 
     def get_tenant_default_fields_values(self):
-        return getattr(self, 'TENANT_DEFAULT_FIELDS_VALUES', {})
+        return getattr(self, 'tenant_default_fields_values', {})
 
     def get_tenant(self):
         return self.instance
 
     def get_field(self, instance, field_key):
-        fields = getattr(instance, self.instance_field_name, {})
-        return fields.get(field_key, None)
+        fields = getattr(instance, self.instance_field_name)
+        if fields:
+            return fields.get(field_key, None)
+
+        return None
 
     def validate_field(self, context, key, value, original_value=None):
         tenant_fields = self.get_tenant_fields()
@@ -50,7 +53,7 @@ class TenantJSONFieldHelper(object):
         except KeyError:
             raise TenantFieldTypeConfigurationError((
                 'You must define a valid type for tenant setting '
-                'field "%(field)s" in "TENANT_SETTINGS_FIELDS"') % key)
+                'field "%(field)s" in "TENANT_SETTINGS_FIELDS"') % {'field': key})
 
         if field_type not in self.TYPES_TO_INTERNAL_MAP.keys():
             raise TenantFieldTypeConfigurationError((

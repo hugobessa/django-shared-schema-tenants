@@ -1,6 +1,5 @@
 from django.contrib.auth.models import Group, Permission
 from django.db import transaction
-from django.conf import settings as django_settings
 from shared_schema_tenants.settings import DEFAULT_TENANT_OWNER_PERMISSIONS
 
 
