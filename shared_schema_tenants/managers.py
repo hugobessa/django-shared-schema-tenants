@@ -45,9 +45,10 @@ class MultipleTenantModelManager(Manager):
             tenant = get_current_tenant()
             if tenant:
                 with transaction.atomic():
-                    model_instance = super(MultipleTenantModelManager, self).create(*args, **kwargs)
+                    model_instance, created = super(MultipleTenantModelManager, self).get_or_create(*args, **kwargs)
                     model_instance.tenants.add(tenant)
             else:
                 raise TenantNotFoundError()
         else:
-            return super(MultipleTenantModelManager, self).create(tenants=tenant)
+            model_instance, created = super(MultipleTenantModelManager, self).create(*args, **kwargs)
+            model_instance.tenants.add(tenant)
