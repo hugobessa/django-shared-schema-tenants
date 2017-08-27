@@ -5,9 +5,9 @@ from shared_schema_tenants.helpers.tenant_json_field import TenantJSONFieldHelpe
 
 
 class TenantExtraDataHelper(TenantJSONFieldHelper):
-    TENANT_FIELDS = DEFAULT_TENANT_EXTRA_DATA_FIELDS
-    TENANT_DEFAULT_FIELDS_VALUES = DEFAULT_TENANT_EXTRA_DATA
 
     def __init__(self, instance=None):
         super(TenantExtraDataHelper, self).__init__(
-            instance_field_name='extra_data', instance=instance)
+            instance_field_name='extra_data', instance=instance,
+            tenant_fields=DEFAULT_TENANT_EXTRA_DATA_FIELDS,
+            tenant_default_fields_values=DEFAULT_TENANT_EXTRA_DATA)

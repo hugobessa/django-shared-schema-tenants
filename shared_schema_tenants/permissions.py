@@ -16,7 +16,7 @@ class DjangoTenantModelPermission(permissions.DjangoModelPermissions):
 
     def has_permission(self, request, view):
         tenant = get_current_tenant()
-        return (super().has_permission(request, view) and
+        return (super(DjangoTenantModelPermission, self).has_permission(request, view) and
                 tenant and
                 request.user.relationships.filter(tenant=tenant).exists())
 

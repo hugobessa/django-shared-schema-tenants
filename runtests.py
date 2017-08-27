@@ -10,17 +10,31 @@ from django.conf import settings
 from django.test.utils import get_runner
 
 
-def run_tests(*test_args):
-    if not test_args:
-        test_args = ['tests']
+def run_tests(*args, **kwargs):
+    if not args:
+        args = ['tests']
 
     os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
     django.setup()
     TestRunner = get_runner(settings)
-    test_runner = TestRunner()
-    failures = test_runner.run_tests(test_args)
+    test_runner = TestRunner(**kwargs)
+    failures = test_runner.run_tests(args)
     sys.exit(bool(failures))
 
 
+def process_kwargs(kwarg):
+    if len(kwarg.split('=')) == 2:
+        return (kwarg.split('=')[0], kwarg.split('=')[1])
+
+    else:
+        return (kwarg, True)
+
 if __name__ == '__main__':
-    run_tests(*sys.argv[1:])
+
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    kwargs = dict(
+        process_kwargs(a[2:])
+        for a in sys.argv[1:] if a.startswith('--')
+    )
+
+    run_tests(*args, **kwargs)
