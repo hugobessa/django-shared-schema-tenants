@@ -48,8 +48,8 @@ DEFAULT_SITE_DOMAIN = tenant_settings.get(
     'localhost'
 )
 
-DEFAULT_SITE_SLUG = tenant_settings.get(
-    'DEFAULT_SITE_SLUG',
+DEFAULT_TENANT_SLUG = tenant_settings.get(
+    'DEFAULT_TENANT_SLUG',
     'default'
 )
 
