@@ -1,4 +1,5 @@
 import platform
+from django.contrib.sites.shortcuts import get_current_site
 from django.utils.functional import SimpleLazyObject
 from shared_schema_tenants.settings import TENANT_HTTP_HEADER
 from shared_schema_tenants.models import Tenant, TenantSite
@@ -12,7 +13,7 @@ else:
 def get_tenant(request):
     if not hasattr(request, '_cached_tenant'):
         try:
-            request._cached_tenant = request.site.tenant_site.tenant
+            request._cached_tenant = get_current_site(request).tenant_site.tenant
             return request._cached_tenant
         except TenantSite.DoesNotExist:
             pass

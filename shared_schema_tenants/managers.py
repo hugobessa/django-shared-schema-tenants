@@ -47,8 +47,10 @@ class MultipleTenantModelManager(Manager):
                 with transaction.atomic():
                     model_instance, created = super(MultipleTenantModelManager, self).get_or_create(*args, **kwargs)
                     model_instance.tenants.add(tenant)
+                    return model_instance
             else:
                 raise TenantNotFoundError()
         else:
             model_instance, created = super(MultipleTenantModelManager, self).create(*args, **kwargs)
             model_instance.tenants.add(tenant)
+            return model_instance
