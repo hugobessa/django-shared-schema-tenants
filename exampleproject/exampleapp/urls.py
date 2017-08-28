@@ -7,7 +7,7 @@ from exampleapp import views
 
 urlpatterns = [
     url(
-        regex=r'^organization/$',
+        regex=r'^$',
         view=views.ArticleViewSet.as_view({
             'get': 'list',
             'post': 'create',
@@ -15,7 +15,7 @@ urlpatterns = [
         name='list'
     ),
     url(
-        regex=r'^organization/(?P<pk>[\w.@+-]+)/$',
+        regex=r'^(?P<pk>[\w.@+-]+)/$',
         view=views.ArticleViewSet.as_view({
             'get': 'retrieve',
             'put': 'update',
