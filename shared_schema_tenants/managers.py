@@ -58,6 +58,7 @@ class MultipleTenantModelManager(Manager):
             else:
                 raise TenantNotFoundError()
         else:
-            model_instance, created = super(MultipleTenantModelManager, self).create(*args, **kwargs)
+            model_instance, created = super(
+                MultipleTenantModelManager, self).create(*args, **kwargs)
             model_instance.tenants.add(tenant)
             return model_instance
