@@ -23,7 +23,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class ArticleSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True, allow_blank=True)
+    tags = TagSerializer(many=True, required=False, allow_null=True)
     author = UserSerializer(read_only=True)
 
     class Meta:
@@ -55,24 +55,27 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tag_creators = validated_data.pop('tags', [])
+        create_data = dict(
+            validated_data,
+            **{'author': self.context['request'].user}
+        )
         with transaction.atomic():
             tags = [tag_creator() for tag_creator in tag_creators]
-            create_data = dict(
-                validated_data,
-                **{'user': self.context['request'].user}
-            )
-            article = super(ArticleSerializer, self).create(**create_data)
+            article = super(ArticleSerializer, self).create(create_data)
             article.tags.set(tags)
             return article
 
     def update(self, instance, validated_data):
-        tags = validated_data.pop('tags', [])
+        tag_creators = validated_data.pop('tags', [])
         create_data = dict(
             validated_data,
-            **{'user': self.context['request'].user}
+            **{'author': self.context['request'].user}
         )
-        for field_name in Article._meta.get_all_field_names():
-            setattr(instance, field_name, create_data.get(field_name, getattr(instance, field_name)))
 
-        instance.tags.set(tags)
-        return instance
+        with transaction.atomic():
+            tags = [tag_creator() for tag_creator in tag_creators]
+            for field_name in Article._meta.get_all_field_names():
+                setattr(instance, field_name, create_data.get(field_name, getattr(instance, field_name)))
+
+            instance.tags.set(tags)
+            return instance
