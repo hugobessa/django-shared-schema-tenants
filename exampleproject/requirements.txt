@@ -1,0 +1,5 @@
+django
+django-model-utils>=2.0
+ipdb==0.10.3
+djangorestframework
+git+https://github.com/hugobessa/django-shared-schema-tenants.git#master

@@ -48,3 +48,6 @@ docs/_build
 
 # Visual Studio Code config files
 .vscode
+
+# SQLite3 db
+*.sqlite3

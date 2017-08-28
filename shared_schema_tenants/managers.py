@@ -52,8 +52,7 @@ class MultipleTenantModelManager(Manager):
                     try:
                         model_instance = self._original_get_queryset().get(**kwargs)
                     except ObjectDoesNotExist:
-                        model_instance = super(
-                            MultipleTenantModelManager, self).create(*args, **kwargs)
+                        model_instance = super(MultipleTenantModelManager, self).create(*args, **kwargs)
                     model_instance.tenants.add(tenant)
                     return model_instance
             else:
