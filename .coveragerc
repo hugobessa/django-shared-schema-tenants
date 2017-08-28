@@ -5,7 +5,8 @@ branch = true
 omit =
     *site-packages*
     *tests*
-    *.tox*
+    *.tox
+    exampleproject/*
 show_missing = True
 exclude_lines =
     raise NotImplementedError
