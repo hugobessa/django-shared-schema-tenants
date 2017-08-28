@@ -2,7 +2,7 @@ from django.db import transaction
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from exampleapp.models import Article, Tag
+from .models import Article, Tag
 
 
 UserModel = get_user_model()

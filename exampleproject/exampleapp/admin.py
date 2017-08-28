@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from exampleapp.models import Article, Tag
+from .models import Article, Tag
 
 
 admin.site.register(Article)
