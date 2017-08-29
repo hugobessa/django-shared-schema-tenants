@@ -7,7 +7,7 @@ omit =
     *tests*
     *.tox
     exampleproject/*
-    urls.py
+    shared_schema_tenants/urls.py
 show_missing = True
 exclude_lines =
     raise NotImplementedError
