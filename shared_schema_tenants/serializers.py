@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from shared_schema_tenants.models import (Tenant, TenantSite)
 from shared_schema_tenants.helpers.tenants import (
-    create_default_tenant_groups, get_current_tenant)
+    create_tenant, update_tenant, get_current_tenant)
 from shared_schema_tenants.helpers import (
     TenantSettingsHelper, TenantExtraDataHelper)
 
@@ -17,7 +17,7 @@ class TenantSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tenant
-        fields = ['name', 'slug', 'extra_data',]
+        fields = ['name', 'slug', 'extra_data']
 
     def validate_extra_data(self, extra_data):
         extra_data_helper = TenantExtraDataHelper()
@@ -30,25 +30,10 @@ class TenantSerializer(serializers.ModelSerializer):
             return validated_extra_data
 
     def create(self, validated_data):
-        with transaction.atomic():
-            tenant = Tenant.objects.create(**validated_data)
-
-            rel = tenant.relationships.create(user=self.context['request'].user)
-            rel.groups.add(create_default_tenant_groups()[0])
-
-            return tenant
+        return create_tenant(**validated_data, user=self.context['request'].user)
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
-        instance.slug = validated_data.get('slug', instance.slug)
-
-        extra_data_helper = TenantExtraDataHelper(instance=instance)
-        instance = extra_data_helper.update_fields(
-            validated_data.get('extra_data', {}), commit=False)
-
-        instance.save()
-
-        return instance
+        return update_tenant(instance, **validated_data)
 
 
 class TenantSettingsSerializer(serializers.Serializer):
