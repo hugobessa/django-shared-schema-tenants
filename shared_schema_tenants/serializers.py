@@ -87,4 +87,3 @@ class TenantSiteSerializer(serializers.Serializer):
         with transaction.atomic():
             site = Site.objects.create(name=domain, domain=domain)
             return TenantSite.objects.create(tenant=tenant, site=site)
-
