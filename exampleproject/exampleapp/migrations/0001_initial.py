@@ -24,7 +24,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('title', models.CharField(max_length=100)),
                 ('text', models.TextField()),
-                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                 to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'abstract': False,
@@ -49,6 +50,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='article',
             name='tenant',
-            field=models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant'),
+            field=models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant,
+                                    on_delete=django.db.models.deletion.CASCADE,
+                                    to='shared_schema_tenants.Tenant'),
         ),
     ]
