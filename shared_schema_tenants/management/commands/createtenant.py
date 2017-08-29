@@ -1,8 +1,7 @@
 from django.db import transaction
-from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
-from shared_schema_tenants.models import Tenant
 from django.utils.text import slugify
+from shared_schema_tenants.helpers.tenants import create_tenant
 
 
 class Command(BaseCommand):
@@ -20,8 +19,6 @@ class Command(BaseCommand):
             domain = 'localhost:8000'
 
         with transaction.atomic():
-            tenant = Tenant.objects.create(name=name, slug=slug)
-            site = Site.objects.create(name=tenant.slug, domain=domain)
-            tenant.tenant_sites.create(site=site)
+            create_tenant(name, slug, {}, [domain])
 
             self.stdout.write(self.style.SUCCESS('Successfully created Tenant %s' % name))
