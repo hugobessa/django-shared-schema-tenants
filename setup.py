@@ -47,7 +47,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 setup(
     name='django-shared-schema-tenants',
     version=version,
-    description="""A lib to help you create applications with shared schema muti tch pain""",
+    description="""A lib to help in the creation of shared schema multi tenants applications without suffering""",
     long_description=readme + '\n\n' + history,
     author='Hugo Bessa',
     author_email='hugo@bessa.me',
