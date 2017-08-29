@@ -62,7 +62,7 @@ make your model inherit from ``SingleTenantModelMixin`` or
     instance = MyModelA(field1='test other tenant', field2=1)
     instance.save()
 
-    print(MyModel.objects.filter(field1__icontains="test"))
+    print(MyModel.tenant_objects.filter(field1__icontains="test"))
     # prints only the instance with 'test other tenant' in field1
 
 
@@ -95,7 +95,7 @@ You can force tenant selection using set\_tenant method.
     def my_function():
         set_current_tenant('default')
 
-        return MyModel.objects.all() # return only the models with tenant__slug='default'
+        return MyModel.tenant_objects.all() # return only the models with tenant__slug='default'
 
 Accessing current tenant
 ------------------------

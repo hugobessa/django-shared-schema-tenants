@@ -30,7 +30,7 @@ class TenantSerializer(serializers.ModelSerializer):
             return validated_extra_data
 
     def create(self, validated_data):
-        return create_tenant(**validated_data, user=self.context['request'].user)
+        return create_tenant(user=self.context['request'].user, **validated_data)
 
     def update(self, instance, validated_data):
         return update_tenant(instance, **validated_data)

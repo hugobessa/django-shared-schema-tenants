@@ -38,7 +38,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             if not tag_dict.get('id'):
                 serializer = TagSerializer(data=tag_dict)
             else:
-                instance = Tag.objects.get(id=tag_dict.get('id'))
+                instance = Tag.tenant_objects.get(id=tag_dict.get('id'))
                 serializer = TagSerializer(instance, data=tag_dict)
 
             if serializer.is_valid():

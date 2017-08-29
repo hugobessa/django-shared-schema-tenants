@@ -8,7 +8,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Article.objects.all()
+        return Article.tenant_objects.all()
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -16,4 +16,4 @@ class TagViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Tag.objects.all()
+        return Tag.tenant_objects.all()
