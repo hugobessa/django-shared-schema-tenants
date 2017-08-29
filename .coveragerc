@@ -8,6 +8,8 @@ omit =
     *.tox
     exampleproject/*
     shared_schema_tenants/urls.py
+    shared_schema_tenants/admin.py
+    shared_schema_tenants/management/**/*.py
 show_missing = True
 exclude_lines =
     raise NotImplementedError
