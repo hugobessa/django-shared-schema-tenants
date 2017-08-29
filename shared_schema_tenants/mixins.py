@@ -12,18 +12,32 @@ def get_default_tenant():
 class SingleTenantModelMixin(models.Model):
     tenant = models.ForeignKey('shared_schema_tenants.Tenant', default=get_default_tenant)
 
-    objects = models.Manager()
+    if django.utils.version.get_complete_version()[1] < 10:
+        objects = models.Manager()
+    else:
+        objects = SingleTenantModelManager()
+        original_manager = models.Manager()
     tenant_objects = SingleTenantModelManager()
 
     class Meta:
         abstract = True
+        if django.utils.version.get_complete_version()[1] >= 10:
+            default_manager_name = 'original_manager'
+            base_manager_name = 'original_manager'
 
 
 class MultipleTenantsModelMixin(models.Model):
     tenants = models.ManyToManyField('shared_schema_tenants.Tenant')
 
-    objects = models.Manager()
+    if django.utils.version.get_complete_version()[1] < 10:
+        objects = models.Manager()
+    else:
+        objects = SingleTenantModelManager()
+        original_manager = models.Manager()
     tenant_objects = MultipleTenantModelManager()
 
     class Meta:
         abstract = True
+        if django.utils.version.get_complete_version()[1] >= 10:
+            default_manager_name = 'original_manager'
+            base_manager_name = 'original_manager'

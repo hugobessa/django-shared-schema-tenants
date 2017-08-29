@@ -62,8 +62,10 @@ make your model inherit from ``SingleTenantModelMixin`` or
     instance = MyModelA(field1='test other tenant', field2=1)
     instance.save()
 
-    print(MyModel.tenant_objects.filter(field1__icontains="test"))
+    print(MyModel.objects.filter(field1__icontains="test"))
     # prints only the instance with 'test other tenant' in field1
+
+    Obs.: For Django 1.8 and 1.9 you have to access the data by the active tenant through :python:`MyModel.tenant_objects.all()` due to a `Django bug that was fixes in version 1.10 <https://code.djangoproject.com/ticket/14891>`_
 
 
 Selecting tenant on requests
@@ -95,7 +97,10 @@ You can force tenant selection using set\_tenant method.
     def my_function():
         set_current_tenant('default')
 
-        return MyModel.tenant_objects.all() # return only the models with tenant__slug='default'
+        return MyModel.objects.all() # return only the models with tenant__slug='default'
+
+
+    Obs.: For Django 1.8 and 1.9 you have to access the data by the active tenant through :python:`MyModel.tenant_objects.all()` due to a `Django bug that was fixes in version 1.10 <https://code.djangoproject.com/ticket/14891>`_
 
 Accessing current tenant
 ------------------------
