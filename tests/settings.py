@@ -22,8 +22,10 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sites",
-    "shared_schema_tenants",
     "rest_framework",
+
+    "shared_schema_tenants.apps.SharedSchemaTenantsConfig",
+    "exampleproject.exampleapp",
 ]
 
 SITE_ID = 1
