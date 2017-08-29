@@ -16,7 +16,8 @@ class SingleTenantModelMixin(models.Model):
         objects = models.Manager()
     else:
         objects = SingleTenantModelManager()
-        original_manager = models.Manager()
+
+    original_manager = models.Manager()
     tenant_objects = SingleTenantModelManager()
 
     class Meta:
@@ -32,9 +33,10 @@ class MultipleTenantsModelMixin(models.Model):
     if django.utils.version.get_complete_version()[1] < 10:
         objects = models.Manager()
     else:
-        objects = SingleTenantModelManager()
-        original_manager = models.Manager()
+        objects = MultipleTenantModelManager()
+
     tenant_objects = MultipleTenantModelManager()
+    original_manager = models.Manager()
 
     class Meta:
         abstract = True
