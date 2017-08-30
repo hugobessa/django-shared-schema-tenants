@@ -1,5 +1,6 @@
 import platform
 from django.contrib.sites.shortcuts import get_current_site
+from django.contrib.sites.models import Site
 from django.utils.functional import SimpleLazyObject
 from shared_schema_tenants.settings import TENANT_HTTP_HEADER
 from shared_schema_tenants.models import Tenant, TenantSite
@@ -15,7 +16,7 @@ def get_tenant(request):
         try:
             request._cached_tenant = get_current_site(request).tenant_site.tenant
             return request._cached_tenant
-        except TenantSite.DoesNotExist:
+        except (TenantSite.DoesNotExist, Site.DoesNotExist):
             pass
 
         try:
@@ -28,6 +29,8 @@ def get_tenant(request):
 
             lazy_tenant._setup()
             request._cached_tenant = lazy_tenant._wrapped
+        except TenantSite.DoesNotExist:
+            return None
 
     return request._cached_tenant
 
@@ -49,7 +52,7 @@ class TenantMiddleware(object):
     @classmethod
     def set_tenant(cls, tenant_slug):
         cls._threadmap[threading.get_ident()] = SimpleLazyObject(
-            lambda: Tenant.objects.get(slug=tenant_slug))
+            lambda: Tenant.objects.filter(slug=tenant_slug).first())
 
     @classmethod
     def clear_tenant(cls):

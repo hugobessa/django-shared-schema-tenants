@@ -18,6 +18,8 @@ DATABASES = {
 
 ROOT_URLCONF = "tests.urls"
 
+ALLOWED_HOSTS = ['*']
+
 INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -27,8 +29,6 @@ INSTALLED_APPS = [
     "shared_schema_tenants.apps.SharedSchemaTenantsConfig",
     "exampleproject.exampleapp",
 ]
-
-SITE_ID = 1
 
 
 def is_url(context, value, original_value):
