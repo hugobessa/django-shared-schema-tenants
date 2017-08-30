@@ -13,8 +13,14 @@ from django.contrib.auth.models import User
 from model_mommy import mommy
 from shared_schema_tenants.serializers import (
     TenantSerializer, TenantSettingsSerializer, TenantSiteSerializer)
-from shared_schema_tenants.models import Tenant, TenantSite
-from shared_schema_tenants.middleware import TenantMiddleware
+from shared_schema_tenants.models import Tenant
+from shared_schema_tenants.helpers.tenants import set_current_tenant
+
+
+try:
+    from django.urls import reverse
+except ImportError:
+    from django.core.urlresolvers import reverse
 
 
 class TenantSerializerTests(TestCase):
@@ -25,7 +31,7 @@ class TenantSerializerTests(TestCase):
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',
             password='test')
-        TenantMiddleware.set_tenant(self.tenants[0].slug)
+        set_current_tenant(self.tenants[0].slug)
         self.params = {
             'name': 'test 2',
             'slug': 'test-2',
@@ -47,7 +53,8 @@ class TenantSerializerTests(TestCase):
                 self.assertTrue(key in data.keys())
 
     def test_create(self):
-        request = RequestFactory()
+        factory = RequestFactory()
+        request = factory.post(reverse('shared_schema_tenants:tenant_list'))
         request.user = self.user
         serializer = TenantSerializer(data=self.params, context={'request': request})
         self.assertTrue(serializer.is_valid())
@@ -58,7 +65,8 @@ class TenantSerializerTests(TestCase):
         self.assertEqual(tenant.extra_data, self.params['extra_data'])
 
     def test_create_invalid_extra_data(self):
-        request = RequestFactory()
+        factory = RequestFactory()
+        request = factory.post(reverse('shared_schema_tenants:tenant_list'))
         request.user = self.user
 
         self.params['extra_data']['logo'] = 'test'
@@ -67,7 +75,8 @@ class TenantSerializerTests(TestCase):
         self.assertDictEqual(serializer.errors, {'extra_data': {'logo': ['This field must be a valid url']}})
 
     def test_create_empty_extra_data(self):
-        request = RequestFactory()
+        factory = RequestFactory()
+        request = factory.post(reverse('shared_schema_tenants:tenant_list'))
         request.user = self.user
 
         self.params['extra_data'] = {}
@@ -120,7 +129,7 @@ class TenantSiteSerializerTests(TestCase):
         self.params = {
             'domain': 'sharedschematenants.com'
         }
-        TenantMiddleware.set_tenant(self.tenant.slug)
+        set_current_tenant(self.tenant.slug)
 
     def test_serialize(self):
         data = TenantSiteSerializer(self.tenant_site).data
@@ -151,7 +160,7 @@ class TenantSettingsSerializerTests(TestCase):
         self.params = {
             'notify_users_by_email': False
         }
-        TenantMiddleware.set_tenant(self.tenants[0].slug)
+        set_current_tenant(self.tenants[0].slug)
 
     def test_serialize(self):
         data = TenantSettingsSerializer(Tenant.objects.all().first()).data
