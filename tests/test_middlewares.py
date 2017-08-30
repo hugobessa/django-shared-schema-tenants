@@ -67,6 +67,15 @@ class GetTenantTests(TestCase):
 
         self.assertEqual(retrieved_tenant, tenant)
 
+    def test_with_unexistent_tenant_in_http_header(self):
+        create_tenant(name='test', slug='test', extra_data={}, domains=['test.localhost:8000'])
+        factory = RequestFactory()
+        request = factory.get(reverse('shared_schema_tenants:tenant_list'), **{'HTTP_TENANT_SLUG': 'unexistent'})
+
+        retrieved_tenant = get_tenant(request)
+
+        self.assertEqual(retrieved_tenant, None)
+
     def test_with_previously_set_tenant(self):
         tenant = create_tenant(name='test', slug='test', extra_data={}, domains=['test.localhost:8000'])
         factory = RequestFactory()

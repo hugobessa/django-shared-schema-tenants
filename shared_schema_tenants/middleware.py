@@ -29,7 +29,7 @@ def get_tenant(request):
 
             lazy_tenant._setup()
             request._cached_tenant = lazy_tenant._wrapped
-        except TenantSite.DoesNotExist:
+        except Tenant.DoesNotExist:
             return None
 
     return request._cached_tenant
