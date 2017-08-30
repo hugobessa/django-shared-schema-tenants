@@ -25,7 +25,8 @@ class TenantSiteForm(forms.ModelForm):
     def clean_site(self):
         site = self.cleaned_data['site']
         instance = getattr(self, 'instance')
-        new_site_instance, created = Site.objects.get_or_create(name=self.data['name'], domain=site)
+        new_site_instance, created = Site.objects.get_or_create(
+            domain=site, defaults={'name': self.data['name']})
         try:
             old_site_instance = instance.site
         except Site.DoesNotExist:
