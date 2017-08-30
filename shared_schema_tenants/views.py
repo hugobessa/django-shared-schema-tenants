@@ -1,7 +1,8 @@
-from rest_framework import generics, views, response, status, permissions
+from rest_framework import generics, views, response, status
 from django.db import transaction
 
 from shared_schema_tenants.models import Tenant, TenantSite
+from shared_schema_tenants.permissions import DjangoTenantModelPermissions
 from shared_schema_tenants.utils import import_class
 from shared_schema_tenants.settings import (
     TENANT_SERIALIZER, TENANT_SITE_SERIALIZER,
@@ -16,7 +17,7 @@ TenantSettingsSerializer = import_class(TENANT_SETTINGS_SERIALIZER)
 
 class TenantListView(generics.ListCreateAPIView):
     serializer_class = TenantSerializer
-    permission_classes = [permissions.DjangoModelPermissions]
+    permission_classes = [DjangoTenantModelPermissions]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -28,7 +29,7 @@ class TenantListView(generics.ListCreateAPIView):
 
 class TenantDetailsView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TenantSerializer
-    permission_classes = [permissions.DjangoModelPermissions]
+    permission_classes = [DjangoTenantModelPermissions]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -43,7 +44,7 @@ class TenantDetailsView(generics.RetrieveUpdateDestroyAPIView):
 
 class TenantSettingsDetailsView(views.APIView):
     serializer_class = TenantSettingsSerializer
-    permission_classes = [permissions.DjangoModelPermissions]
+    permission_classes = [DjangoTenantModelPermissions]
 
     def get(self, request, *args, **kwargs):
         serializer = self.get_serializer_class(
@@ -64,7 +65,7 @@ class TenantSettingsDetailsView(views.APIView):
 
 class TenantSiteListView(generics.ListCreateAPIView):
     serializer_class = TenantSiteSerializer
-    permission_classes = [permissions.DjangoModelPermissions]
+    permission_classes = [DjangoTenantModelPermissions]
 
     def get_queryset(self):
         return TenantSite.objects.filter().distinct()
@@ -78,7 +79,7 @@ class TenantSiteListView(generics.ListCreateAPIView):
 
 class TenantSiteDetailsView(generics.DestroyAPIView):
     serializer_class = TenantSiteSerializer
-    permission_classes = [permissions.DjangoModelPermissions]
+    permission_classes = [DjangoTenantModelPermissions]
 
     def get_queryset(self):
         return TenantSite.objects.filter().distinct()
