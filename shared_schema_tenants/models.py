@@ -3,7 +3,6 @@ from django.conf import settings as django_settings
 from django.contrib.sites.models import Site
 from django.db.models.signals import post_delete
 
-
 import json
 
 from model_utils.models import TimeStampedModel
@@ -87,4 +86,4 @@ class TenantRelationship(TimeStampedModel):
         return '%s - %s (%s)' % (str(self.user), str(self.tenant), groups_str)
 
     class Meta:
-        unique_together = [['user', 'tenant']]
+        unique_together = [('user', 'tenant')]
