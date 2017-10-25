@@ -28,6 +28,7 @@ INSTALLED_APPS = [
 
     "shared_schema_tenants.apps.SharedSchemaTenantsConfig",
     "exampleproject.exampleapp",
+    "shared_schema_tenants_custom_data.apps.SharedSchemaTenantsCustomDataConfig",
 ]
 
 

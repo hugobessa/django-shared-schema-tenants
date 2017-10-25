@@ -20,7 +20,7 @@ class TenantSpecificFieldsQueryset(QuerySet):
             TenantSpecificFieldDefinition, TenantSpecificFieldChunk)
 
         definitions = TenantSpecificFieldDefinition.objects.filter(
-            content_type=ContentType.objects.get_for_model(self.model))
+            table__content_type=ContentType.objects.get_for_model(self.model))
         definitions_by_name = {d.name: d for d in definitions}
 
         annotate_fields = {}
@@ -82,7 +82,7 @@ class TenantSpecificFieldsQueryset(QuerySet):
             TenantSpecificFieldDefinition, TenantSpecificFieldChunk)
 
         definitions = TenantSpecificFieldDefinition.objects.filter(
-            content_type=ContentType.objects.get_for_model(self.model))
+            table__content_type=ContentType.objects.get_for_model(self.model))
         definitions_by_name = {d.name: d for d in definitions}
 
         custom_fields = {k: v for k, v in kwargs.items() if k in definitions_by_name.keys()}
@@ -91,6 +91,6 @@ class TenantSpecificFieldsQueryset(QuerySet):
         super().update(**common_fields)
 
         for field_name, field_value in custom_fields.items():
-            TenantSpecificFieldChunk.objects.filter(
-                definitions_id=definitions_by_name[field_name].id).update(
-                **{('value_' + definitions_by_name[field_name].data_type): field_value})
+            (TenantSpecificFieldChunk.objects
+             .filter(definitions_id=definitions_by_name[field_name].id)
+             .update(**{('value_' + definitions_by_name[field_name].data_type): field_value}))

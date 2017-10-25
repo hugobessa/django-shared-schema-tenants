@@ -6,7 +6,6 @@ from shared_schema_tenants_custom_data.managers import TenantSpecificFieldsModel
 
 
 class TenantSpecificFieldsModel(models.Model):
-
     objects = TenantSpecificFieldsModelManager
 
     def create_tenant_specific_fields(self):
@@ -30,7 +29,7 @@ class TenantSpecificFieldsModel(models.Model):
 
         old = self.__class__.objects.get(self.pk)
         definitions = TenantSpecificFieldDefinition.objects.filter(
-            content_type=ContentType.objects.get_for_model(self.model))
+            table__content_type=ContentType.objects.get_for_model(self.model))
         definitions_by_name = {d.name: d for d in definitions}
 
         with transaction.atomic():

@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
 from model_utils.models import TimeStampedModel
@@ -11,6 +11,8 @@ from shared_schema_tenants.mixins import SingleTenantModelMixin, MultipleTenants
 
 class TenantSpecificTable(SingleTenantModelMixin):
     name = models.CharField(max_length=255)
+    content_type = models.OneToOneField(
+        ContentType, blank=True, null=True, related_name="tenant_specific_table")
 
     class Meta:
         unique_together = [('tenant', 'name')]
@@ -21,7 +23,7 @@ class TenantSpecificTable(SingleTenantModelMixin):
 
 class TenantSpecificFieldsValidator(MultipleTenantsModelMixin):
     module_path = models.CharField(max_length=255)
-    tenants = models.ManyToManyField('Tenant', related_name='validators_available')
+    tenants = models.ManyToManyField('shared_schema_tenants.Tenant', related_name='validators_available')
 
     def __str__(self):
         return self.module_path
@@ -30,18 +32,14 @@ class TenantSpecificFieldsValidator(MultipleTenantsModelMixin):
 class TenantSpecificFieldDefinition(SingleTenantModelMixin):
     name = models.CharField(max_length=255)
     DATA_TYPES = Choices('char', 'text', 'integer', 'float', 'datetime', 'date')
-    data_type = StatusField(choices_name=DATA_TYPES)
+    data_type = StatusField(choices_name='DATA_TYPES')
     is_required = models.BooleanField(default=False)
     default_value = models.TextField()
     validators = models.ManyToManyField('TenantSpecificFieldsValidator')
-    content_type = models.ForeignKey(ContentType)
-
-    # This only must be filled if the content_type is TenantSpecificTable
-    table = models.ForeignKey('TenantSpecificTable', related_name='fields_definitions',
-                              blank=True, null=True)
+    table = models.ForeignKey('TenantSpecificTable', related_name='fields_definitions')
 
     class Meta:
-        unique_together = [('tenant', 'content_type', 'name')]
+        unique_together = [('tenant', 'table', 'name')]
 
     def __str__(self):
         content_type = '%s/%s' % (self.tenant.slug, str(self.content_type))
@@ -49,13 +47,6 @@ class TenantSpecificFieldDefinition(SingleTenantModelMixin):
             content_type = str(self.table)
 
         return '%s/%s' % (content_type, self.name)
-
-
-class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, ):
-    table = models.ForeignKey('TenantSpecificTable', related_name='rows')
-
-    def __str__(self):
-        return ', '.join(str(value) for value in self.chunks.all())
 
 
 class TenantSpecificFieldChunk(models.Model):
@@ -70,12 +61,20 @@ class TenantSpecificFieldChunk(models.Model):
 
     row_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     row_id = models.PositiveIntegerField()
-    row = GenericForeignKey('row_content_type', 'row_id', related_query_name='chunks')
+    row = GenericForeignKey('row_content_type', 'row_id')
 
     class Meta:
-        unique_together = [('definition', 'row')]
+        unique_together = [('definition', 'row_id', 'row_content_type')]
 
     def __str__(self):
         return '%s: %s' % (
             str(self.definition), str(getattr(self, 'value_' + self.definition.data_type))
         )
+
+
+class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, ):
+    table = models.ForeignKey('TenantSpecificTable', related_name='rows')
+    chunks = GenericRelation(TenantSpecificFieldChunk)
+
+    def __str__(self):
+        return ', '.join(str(value) for value in self.chunks.all())
