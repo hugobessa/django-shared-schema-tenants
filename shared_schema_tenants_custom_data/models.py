@@ -51,13 +51,11 @@ class TenantSpecificFieldDefinition(SingleTenantModelMixin):
         return '%s/%s' % (content_type, self.name)
 
 
-class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin):
-    table = models.ForeignKey('TenantSpecificTable', related_name='fields_definitions')
+class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, ):
+    table = models.ForeignKey('TenantSpecificTable', related_name='rows')
 
     def __str__(self):
-        repr = ''
-        for value in self.chunks.all():
-            repr += str(value)
+        return ', '.join(str(value) for value in self.chunks.all())
 
 
 class TenantSpecificFieldChunk(models.Model):
