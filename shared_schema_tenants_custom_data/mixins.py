@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from shared_schema_tenants_custom_data.managers import TenantSpecificFieldsModelManager
 
 
-class TenantSpecificFieldsModel(models.Model):
+class TenantSpecificFieldsModelMixin(models.Model):
     objects = TenantSpecificFieldsModelManager
 
     def create_tenant_specific_fields(self):

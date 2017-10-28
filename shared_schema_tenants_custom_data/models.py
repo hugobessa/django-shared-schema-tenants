@@ -1,3 +1,4 @@
+import django
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -7,6 +8,8 @@ from model_utils.choices import Choices
 from model_utils.fields import StatusField
 
 from shared_schema_tenants.mixins import SingleTenantModelMixin, MultipleTenantsModelMixin
+from shared_schema_tenants_custom_data.mixins import TenantSpecificFieldsModelMixin
+from shared_schema_tenants_custom_data.managers import TenantSpecificTableRowManager
 
 
 class TenantSpecificTable(SingleTenantModelMixin):
@@ -72,9 +75,23 @@ class TenantSpecificFieldChunk(models.Model):
         )
 
 
-class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, ):
+class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpecificFieldsModelMixin):
     table = models.ForeignKey('TenantSpecificTable', related_name='rows')
     chunks = GenericRelation(TenantSpecificFieldChunk)
+
+    if django.utils.version.get_complete_version()[1] < 10:
+        objects = models.Manager()
+    else:
+        objects = TenantSpecificTableRowManager()
+
+    original_manager = models.Manager()
+    tenant_objects = TenantSpecificTableRowManager()
+
+    class Meta:
+        abstract = True
+        if django.utils.version.get_complete_version()[1] >= 10:
+            default_manager_name = 'original_manager'
+            base_manager_name = 'original_manager'
 
     def __str__(self):
         return ', '.join(str(value) for value in self.chunks.all())
