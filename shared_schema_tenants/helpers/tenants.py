@@ -2,7 +2,7 @@ from django.contrib.sites.models import Site
 from django.contrib.auth.models import Group, Permission
 from django.db import transaction
 
-from shared_schema_tenants.settings import DEFAULT_TENANT_OWNER_PERMISSIONS
+from shared_schema_tenants.settings import get_setting
 
 
 def get_current_tenant():
@@ -58,7 +58,7 @@ def create_default_tenant_groups():
         group, created = Group.objects.get_or_create(name='tenant_owner')
 
         if created:
-            for perm in DEFAULT_TENANT_OWNER_PERMISSIONS:
+            for perm in get_setting('DEFAULT_TENANT_OWNER_PERMISSIONS'):
                 try:
                     group.permissions.add(Permission.objects.get(
                         content_type__app_label=perm.split('.')[0],

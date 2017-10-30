@@ -9,7 +9,7 @@ def create_relationship(tenant, user, groups=[], permissions=[]):
             relationship.groups.set(groups)
             relationship.permissions.set(permissions)
         except AttributeError:
-            # compatibility with old django 1.8 and 1.9
+            # compatibility with old django 1.9
             for group in groups:
                 relationship.groups.add(group)
             for perm in permissions:
