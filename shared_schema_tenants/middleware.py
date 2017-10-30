@@ -2,7 +2,7 @@ import platform
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.sites.models import Site
 from django.utils.functional import SimpleLazyObject
-from shared_schema_tenants.settings import TENANT_HTTP_HEADER
+from shared_schema_tenants.settings import get_setting
 from shared_schema_tenants.models import Tenant, TenantSite
 
 if platform.python_version_tuple()[0] == '2':
@@ -20,7 +20,7 @@ def get_tenant(request):
             pass
 
         try:
-            tenant_http_header = 'HTTP_' + TENANT_HTTP_HEADER.replace('-', '_').upper()
+            tenant_http_header = 'HTTP_' + get_setting('TENANT_HTTP_HEADER').replace('-', '_').upper()
             request._cached_tenant = Tenant.objects.get(slug=request.META[tenant_http_header])
         except LookupError:
             lazy_tenant = TenantMiddleware.get_current_tenant()
