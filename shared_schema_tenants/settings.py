@@ -3,8 +3,12 @@ from django.conf import settings
 
 def get_setting(settings_name):
     tenant_settings = getattr(settings, 'SHARED_SCHEMA_TENANTS', {})
-    settings_dict = {
+    DEFAULT_TENANT_SETTINGS_FIELDS = tenant_settings.get(
+        'DEFAULT_TENANT_SETTINGS_FIELDS', {})
+    DEFAULT_TENANT_EXTRA_DATA_FIELDS = tenant_settings.get(
+        'DEFAULT_TENANT_EXTRA_DATA_FIELDS', {}),
 
+    settings_dict = {
         "TENANT_SERIALIZER": (tenant_settings
                               .get('SERIALIZERS', {})
                               .get('TENANT_SERIALIZER',
@@ -21,15 +25,12 @@ def get_setting(settings_name):
             tenant_settings
             .get('SERIALIZERS', {})
             .get('TENANT_SITE_SERIALIZER',
-                'shared_schema_tenants.serializers.TenantSiteSerializer')),
-        "DEFAULT_TENANT_SETTINGS_FIELDS": tenant_settings.get(
-            'DEFAULT_TENANT_SETTINGS_FIELDS', {}),
+                 'shared_schema_tenants.serializers.TenantSiteSerializer')),
+        "DEFAULT_TENANT_SETTINGS_FIELDS": DEFAULT_TENANT_SETTINGS_FIELDS,
         "DEFAULT_TENANT_SETTINGS": {key: value.get('default')
                                     for key, value
                                     in DEFAULT_TENANT_SETTINGS_FIELDS.items()},
-        "DEFAULT_TENANT_EXTRA_DATA_FIELDS": tenant_settings.get(
-            'DEFAULT_TENANT_EXTRA_DATA_FIELDS',
-            {}),
+        "DEFAULT_TENANT_EXTRA_DATA_FIELDS": DEFAULT_TENANT_EXTRA_DATA_FIELDS,
         "DEFAULT_TENANT_EXTRA_DATA": {key: value.get('default')
                                       for key, value
                                       in DEFAULT_TENANT_EXTRA_DATA_FIELDS.items()},
