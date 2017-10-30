@@ -43,11 +43,17 @@ class TenantSpecificFieldsModelMixin(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            super(TenantSpecificFieldsModel, self).save(*args, **kwargs)
+            super(TenantSpecificFieldsModelMixin, self).save(*args, **kwargs)
             self.create_tenant_specific_fields()
         else:
-            super(TenantSpecificFieldsModel, self).save(*args, **kwargs)
+            super(TenantSpecificFieldsModelMixin, self).save(*args, **kwargs)
             self.update_tenant_specific_fields()
+
+    @classmethod
+    def fields_definitions(cls):
+        from shared_schema_tenants_custom_data.models import TenantSpecificFieldDefinition
+        return TenantSpecificFieldDefinition.objects.filter(
+            table_content_type=ContentType.objects.get_for_model(cls))
 
     class Meta:
         abstract = True

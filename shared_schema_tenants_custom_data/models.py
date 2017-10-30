@@ -14,14 +14,18 @@ from shared_schema_tenants_custom_data.managers import TenantSpecificTableRowMan
 
 class TenantSpecificTable(SingleTenantModelMixin):
     name = models.CharField(max_length=255)
-    content_type = models.OneToOneField(
-        ContentType, blank=True, null=True, related_name="tenant_specific_table")
 
     class Meta:
         unique_together = [('tenant', 'name')]
 
     def __str__(self):
         return '%s/%s' % (self.tenant.slug, self.name)
+
+    @property
+    def fields_definitions(self):
+        return TenantSpecificFieldDefinition.objects.filter(
+            table_content_type=ContentType.objects.get_for_model(TenantSpecificTable),
+            table_id=self.id)
 
 
 class TenantSpecificFieldsValidator(MultipleTenantsModelMixin):
@@ -39,7 +43,9 @@ class TenantSpecificFieldDefinition(SingleTenantModelMixin):
     is_required = models.BooleanField(default=False)
     default_value = models.TextField()
     validators = models.ManyToManyField('TenantSpecificFieldsValidator')
-    table = models.ForeignKey('TenantSpecificTable', related_name='fields_definitions')
+
+    table_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    table_id = models.PositiveIntegerField(blank=True, null=True)
 
     class Meta:
         unique_together = [('tenant', 'table', 'name')]
@@ -95,3 +101,7 @@ class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpe
 
     def __str__(self):
         return ', '.join(str(value) for value in self.chunks.all())
+
+    @property
+    def fields_definitions(self):
+        return self.table.fields_definitions
