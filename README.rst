@@ -64,8 +64,8 @@ Features
 --------
 
 * **Tenants synced with django requests:** The active tenant can be extracted from the domain of the request and from a specific http header attribute.
-* **Easy data isolation between tenants:** You reatrieve and create data the same way you do without tenants. The active tenant can be retreived from the request, and can also be forcedly set.
-* **Partially shared resources:** If there are resources that can be accessed from more then one tenant in your applidation, you don't need to duplicate it.
+* **Easy data isolation between tenants:** You retrieve and create data the same way you do without tenants. The active tenant can be retrieved from the request, and can also be forcedly set.
+* **Partially shared data:** If there is data that can be accessed from more then one tenant in your applidation, you don't need to duplicate it.
 
 
 Running Tests
