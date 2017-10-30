@@ -9,7 +9,7 @@ from model_utils.models import TimeStampedModel
 
 from shared_schema_tenants.managers import (
     SingleTenantModelManager)
-from shared_schema_tenants.settings import DEFAULT_TENANT_SETTINGS, DEFAULT_TENANT_EXTRA_DATA
+from shared_schema_tenants.settings import get_setting
 from shared_schema_tenants.validators import validate_json
 
 
@@ -20,16 +20,16 @@ class Tenant(TimeStampedModel):
     if 'postgresql' in django_settings.DATABASES['default']['ENGINE']:
         from django.contrib.postgres.fields import JSONField
         extra_data = JSONField(blank=True, null=True,
-                               default=DEFAULT_TENANT_EXTRA_DATA)
+                               default=get_setting('DEFAULT_TENANT_EXTRA_DATA'))
         settings = JSONField(blank=True, null=True,
-                             default=DEFAULT_TENANT_SETTINGS)
+                             default=get_setting('DEFAULT_TENANT_SETTINGS'))
     else:
         _extra_data = models.TextField(blank=True, null=True,
                                        validators=[validate_json],
-                                       default=json.dumps(DEFAULT_TENANT_EXTRA_DATA))
+                                       default=json.dumps(get_setting('DEFAULT_TENANT_EXTRA_DATA')))
         _settings = models.TextField(blank=True, null=True,
                                      validators=[validate_json],
-                                     default=json.dumps(DEFAULT_TENANT_SETTINGS))
+                                     default=json.dumps(get_setting('DEFAULT_TENANT_SETTINGS')))
 
         @property
         def extra_data(self):
