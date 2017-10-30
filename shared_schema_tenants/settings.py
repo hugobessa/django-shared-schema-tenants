@@ -6,7 +6,7 @@ def get_setting(settings_name):
     DEFAULT_TENANT_SETTINGS_FIELDS = tenant_settings.get(
         'DEFAULT_TENANT_SETTINGS_FIELDS', {})
     DEFAULT_TENANT_EXTRA_DATA_FIELDS = tenant_settings.get(
-        'DEFAULT_TENANT_EXTRA_DATA_FIELDS', {}),
+        'DEFAULT_TENANT_EXTRA_DATA_FIELDS', {})
 
     settings_dict = {
         "TENANT_SERIALIZER": (tenant_settings
