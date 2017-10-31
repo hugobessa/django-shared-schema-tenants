@@ -12,7 +12,7 @@ urlpatterns = [
         name='tenant_list'
     ),
     url(
-        regex=r'^organization/(?P<pk>[\w.@+-]+)/$',
+        regex=r'^organization/details/$',
         view=views.TenantDetailsView.as_view(),
         name='tenant_details'
     ),
@@ -25,5 +25,10 @@ urlpatterns = [
         regex=r'^organization-site/(?P<pk>[\d]+)/$',
         view=views.TenantSiteDetailsView.as_view(),
         name='tenant_site_details'
+    ),
+    url(
+        regex=r'^organization-settings/(?P<pk>[\w.@+-]+)/$',
+        view=views.TenantSettingsDetailsView.as_view(),
+        name='tenant_settings_details'
     ),
 ]
