@@ -1,3 +1,4 @@
+import sys
 from django.core.exceptions import ValidationError
 from django.utils.text import ugettext_lazy as _
 from shared_schema_tenants.exceptions import TenantFieldTypeConfigurationError
@@ -23,6 +24,9 @@ class TenantJSONFieldHelper(object):
         self.tenant = get_current_tenant()
         self.tenant_fields = tenant_fields
         self.tenant_default_fields_values = tenant_default_fields_values
+
+        if sys.version_info < (3, 4):
+            self.TYPES_TO_INTERNAL_MAP['string'].append(type(u''))
 
     def get_tenant_fields(self):
         return getattr(self, 'tenant_fields', {})
@@ -72,7 +76,6 @@ class TenantJSONFieldHelper(object):
                         _('This field is required')
                     ]
                 })
-
             if type(value) not in self.TYPES_TO_INTERNAL_MAP[field_type]:
                 raise ValidationError({
                     key: [
