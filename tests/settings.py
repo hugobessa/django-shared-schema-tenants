@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sites",
+    "django.contrib.sessions",
     "rest_framework",
 
     "shared_schema_tenants.apps.SharedSchemaTenantsConfig",
@@ -74,3 +75,14 @@ else:
     MIDDLEWARE_CLASSES = (
         'shared_schema_tenants.middleware.TenantMiddleware',
     )
+
+
+REST_FRAMEWORK = {
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+}
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'shared_schema_tenants.auth_backends.TenantModelBackend'
+]

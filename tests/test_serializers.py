@@ -175,7 +175,7 @@ class TenantSettingsSerializerTests(TestCase):
     def test_update(self):
         serializer = TenantSettingsSerializer(data=self.params)
         self.assertTrue(serializer.is_valid())
-        tenant_site = serializer.save()
+        tenant = serializer.save()
         self.assertEqual(
-            tenant_site.settings['notify_users_by_email'],
+            tenant.settings['notify_users_by_email'],
             self.params['notify_users_by_email'])

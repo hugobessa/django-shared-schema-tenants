@@ -45,6 +45,9 @@ def get_setting(settings_name):
         "TENANT_HTTP_HEADER": tenant_settings.get('TENANT_HTTP_HEADER', 'Tenant-Slug'),
         "DEFAULT_TENANT_OWNER_PERMISSIONS": tenant_settings.get(
             'DEFAULT_TENANT_OWNER_PERMISSIONS', [
+                'shared_schema_tenants.add_tenant',
+                'shared_schema_tenants.change_tenant',
+                'shared_schema_tenants.delete_tenant',
                 'shared_schema_tenants.add_tenantsite',
                 'shared_schema_tenants.change_tenantsite',
                 'shared_schema_tenants.delete_tenantsite',
