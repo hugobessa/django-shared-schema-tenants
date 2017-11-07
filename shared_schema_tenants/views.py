@@ -3,16 +3,16 @@ from django.db import transaction
 
 from shared_schema_tenants.models import Tenant, TenantSite
 from shared_schema_tenants.permissions import DjangoTenantModelPermissions
-from shared_schema_tenants.utils import import_class
+from shared_schema_tenants.utils import import_item
 from shared_schema_tenants.settings import (
     TENANT_SERIALIZER, TENANT_SITE_SERIALIZER,
     TENANT_SETTINGS_SERIALIZER)
 from shared_schema_tenants.helpers.tenants import get_current_tenant
 
 
-TenantSerializer = import_class(TENANT_SERIALIZER)
-TenantSiteSerializer = import_class(TENANT_SITE_SERIALIZER)
-TenantSettingsSerializer = import_class(TENANT_SETTINGS_SERIALIZER)
+TenantSerializer = import_item(TENANT_SERIALIZER)
+TenantSiteSerializer = import_item(TENANT_SITE_SERIALIZER)
+TenantSettingsSerializer = import_item(TENANT_SETTINGS_SERIALIZER)
 
 
 class TenantListView(generics.ListCreateAPIView):

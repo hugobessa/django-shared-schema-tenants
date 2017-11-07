@@ -1,12 +1,16 @@
 from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import get_object_or_404
+from django.http import Http404
 from django.db import transaction
-from rest_framework import status, generics
+from rest_framework import status, generics, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from shared_schema_tenants_custom_data.settings import get_setting
-from shared_schema_tenants_custom_data.models import TenantSpecificTable, TenantSpecificFieldDefinition
+from shared_schema_tenants_custom_data.models import (
+    TenantSpecificTable, TenantSpecificFieldDefinition, TenantSpecificTableRow)
 from shared_schema_tenants_custom_data.serializers import (
-    TenantSpecificFieldDefinitionCreateSerializer, TenantSpecificFieldDefinitionUpdateSerializer)
+    TenantSpecificFieldDefinitionCreateSerializer, TenantSpecificFieldDefinitionUpdateSerializer,
+    get_tenant_specific_table_row_serializer_class)
 
 
 class CustomizableModelsList(APIView):
@@ -18,10 +22,12 @@ class CustomizableModelsList(APIView):
         if search:
             custom_tables = custom_tables.filter(icontains=search)
             customizable_models_names = [
-                m.replace('.', '__').lower() for m in customizable_models_names if search in m]
+                m.replace('.', get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR')).lower()
+                for m in customizable_models_names if search in m
+            ]
 
         filter_results = self.request.GET.get('filter')
-        if filter_results == 'custom_tables':
+        if filter_results == get_setting('CUSTOM_TABLES_FILTER_KEYWORD'):
             customizable_models_names = []
         elif filter_results == 'models':
             custom_tables.none()
@@ -32,7 +38,10 @@ class CustomizableModelsList(APIView):
         }
 
     def get_custom_tables_names(self, custom_tables):
-        return ['_custom_tables__' + t for t in custom_tables.values_list('name', flat=True)]
+        return [
+            get_setting('CUSTOM_TABLES_LABEL') + get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR') + t
+            for t in custom_tables.values_list('name', flat=True)
+        ]
 
     def paginate_results(self, custom_tables, customizable_models_names):
         page_number = self.request.GET.get('page')
@@ -81,10 +90,10 @@ class CustomTableDetails(generics.RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         table_slug = self.kwargs['slug']
-        table_slug_parts = table_slug.split('__')
+        table_slug_parts = table_slug.split(get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR'))
         app = table_slug_parts[0]
 
-        if app == '_custom_tables':
+        if app == get_setting('CUSTOM_TABLES_LABEL'):
             definitions = TenantSpecificFieldDefinition.objects.filter(
                 table_content_type=ContentType.objects.get_for_model(TenantSpecificTable),
                 table_id=TenantSpecificTable.objects.get(name=table_slug_parts[1]).id
@@ -100,10 +109,10 @@ class CustomTableDetails(generics.RetrieveUpdateDestroyAPIView):
         partial = kwargs.get('partial', False)
 
         table_slug = self.kwargs['slug']
-        table_slug_parts = table_slug.split('__')
+        table_slug_parts = table_slug.split(get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR'))
         app = table_slug_parts[0]
 
-        if app == '_custom_tables':
+        if app == get_setting('CUSTOM_TABLES_LABEL'):
             context = self.get_custom_table_serializer_context(table_slug_parts[-1])
         else:
             context = self.get_customizable_model_serializer_context(table_slug)
@@ -154,10 +163,10 @@ class CustomTableDetails(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         table_slug = self.kwargs['slug']
-        table_slug_parts = table_slug.split('__')
+        table_slug_parts = table_slug.split(get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR'))
         app = table_slug_parts[0]
 
-        if app == '_custom_tables':
+        if app == get_setting('CUSTOM_TABLES_LABEL'):
             with transaction.atomic():
                 table = TenantSpecificTable.objects.get(name=table_slug_parts[1])
                 TenantSpecificFieldDefinition.objects.filter(
@@ -173,3 +182,27 @@ class CustomTableDetails(generics.RetrieveUpdateDestroyAPIView):
                 ).delete()
 
         return Response()
+
+
+class TenantSpecificTableRowViewset(viewsets.ModelViewSet):
+
+    def get_object(self):
+        if not self.object:
+            table_slug = self.kwargs['slug']
+            not_found = True
+            if get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR') in table_slug:
+                table_slug_parts = table_slug.split(get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR'))
+                if table_slug_parts[0] == get_setting('CUSTOM_TABLES_LABEL'):
+                    self.object = get_object_or_404(TenantSpecificTable, name=table_slug_parts[1])
+                    not_found = False
+
+            if not_found:
+                raise Http404()
+
+        return self.object
+
+    def get_queryset(self):
+        return TenantSpecificTableRow.objects.filter(table=self.get_object())
+
+    def get_serializer_class(self):
+        return get_tenant_specific_table_row_serializer_class(self.get_object().name)

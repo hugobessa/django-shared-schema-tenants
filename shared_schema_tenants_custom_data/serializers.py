@@ -1,5 +1,20 @@
+from collections import OrderedDict
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils.text import ugettext_lazy as _
 from rest_framework import serializers
-from shared_schema_tenants_custom_data.models import TenantSpecificFieldDefinition, TenantSpecificFieldChunk
+from rest_framework.fields import get_error_detail, set_value
+from rest_framework.fields import SkipField
+from shared_schema_tenants_custom_data.models import (
+    TenantSpecificFieldDefinition, TenantSpecificFieldChunk, TenantSpecificTable,
+    TenantSpecificTableRow)
+from shared_schema_tenants.utils import import_item
+
+
+def compose_list(funcs):
+    def inner(data, funcs=funcs):
+        return inner(funcs[-1](data), funcs[:-1]) if funcs else data
+    return inner
 
 
 class TenantSpecificFieldDefinitionCreateSerializer(serializers.ModelSerializer):
@@ -45,3 +60,147 @@ class TenantSpecificFieldDefinitionUpdateSerializer(serializers.ModelSerializer)
         instance.validators.set(validated_date.get('validators', instance.validators))
 
         return instance
+
+
+class TenantSpecificModelSerializer(serializers.ModelSerializer):
+
+    serializer_tenant_specific_field_mapping = {
+        'integer': serializers.IntegerField,
+        'char': serializers.CharField,
+        'text': serializers.TextField,
+        'float': serializers.FloatField,
+        'datetime': serializers.DateTimeField,
+        'date': serializers.DateField,
+    }
+
+    def __init__(self, *args, **kwargs):
+        ModelClass = self.Meta.model
+
+        self.tenant_specific_fields_definitions = TenantSpecificFieldDefinition.objects.filter(
+            table_content_type=ContentType.objects.get_from_model(ModelClass))
+
+        for definition in self.tenant_specific_fields_definitions:
+            field_kwargs = {}
+            if definition.is_required:
+                field_kwargs.update({
+                    'required': True,
+                    'allow_null': True
+                })
+            if definition.default_value is not None:
+                field_kwargs.update({'default': definition.default_value})
+
+            setattr(self, definition.name,
+                    self.serializer_tenant_specific_field_mapping[definition.data_type](**field_kwargs))
+
+        super(TenantSpecificModelSerializer, self).__init__(*args, **kwargs)
+
+    def to_internal_value(self, data):
+        ret = OrderedDict()
+        errors = OrderedDict()
+
+        for field in self.tenant_specific_fields_definitions:
+            validators = []
+            for validator_instance in field.validators.all():
+                validator_function = import_item(validator_instance.module_path)
+                validators.append(validator_function)
+
+            validate_method = compose_list(validators)
+
+            primitive_value = field.get_value(data)
+            try:
+                validated_value = field.run_validation(primitive_value)
+                if validate_method is not None:
+                    validated_value = validate_method(validated_value)
+            except serializers.ValidationError as exc:
+                errors[field.field_name] = exc.detail
+            except DjangoValidationError as exc:
+                errors[field.field_name] = get_error_detail(exc)
+            except SkipField:
+                pass
+            else:
+                set_value(ret, field.source_attrs, validated_value)
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        data.update(dict(ret))
+
+        ret = super(TenantSpecificModelSerializer, self).to_internal_value(data)
+
+        return ret
+
+
+def get_tenant_specific_table_row_serializer_class(table_name):
+
+    tenant_specific_fields_definitions = TenantSpecificFieldDefinition.objects.filter(
+        table_content_type=ContentType.objects.get_from_model(TenantSpecificTable),
+        table_id__in=TenantSpecificTable.objects.filter(name=table_name).values_list('id', flat=True)
+    )
+
+    class TenantSpecificTableRowSerializer(serializers.ModelSerializer):
+
+        class Meta:
+            model = TenantSpecificTableRow
+            fields = ['id'] + tenant_specific_fields_definitions.values_list('name', flat=True)
+
+        serializer_tenant_specific_field_mapping = {
+            'integer': serializers.IntegerField,
+            'char': serializers.CharField,
+            'text': serializers.TextField,
+            'float': serializers.FloatField,
+            'datetime': serializers.DateTimeField,
+            'date': serializers.DateField,
+        }
+
+        def __init__(self, *args, **kwargs):
+            for definition in tenant_specific_fields_definitions:
+                field_kwargs = {}
+                if definition.is_required:
+                    field_kwargs.update({
+                        'required': True,
+                        'allow_null': True
+                    })
+                if definition.default_value is not None:
+                    field_kwargs.update({'default': definition.default_value})
+
+                setattr(self, definition.name,
+                        self.serializer_tenant_specific_field_mapping[definition.data_type](**field_kwargs))
+
+            super(TenantSpecificModelSerializer, self).__init__(*args, **kwargs)
+
+        def to_internal_value(self, data):
+            ret = OrderedDict()
+            errors = OrderedDict()
+
+            for field in tenant_specific_fields_definitions:
+                validators = []
+                for validator_instance in field.validators.all():
+                    validator_function = import_item(validator_instance.module_path)
+                    validators.append(validator_function)
+
+                validate_method = compose_list(validators)
+
+                primitive_value = field.get_value(data)
+                try:
+                    validated_value = field.run_validation(primitive_value)
+                    if validate_method is not None:
+                        validated_value = validate_method(validated_value)
+                except serializers.ValidationError as exc:
+                    errors[field.field_name] = exc.detail
+                except DjangoValidationError as exc:
+                    errors[field.field_name] = get_error_detail(exc)
+                except SkipField:
+                    pass
+                else:
+                    set_value(ret, field.source_attrs, validated_value)
+
+            if errors:
+                raise serializers.ValidationError(errors)
+
+            data.update(dict(ret))
+
+            ret = super(TenantSpecificModelSerializer, self).to_internal_value(data)
+
+            return ret
+
+    return TenantSpecificTableRowSerializer

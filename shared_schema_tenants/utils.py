@@ -1,5 +1,5 @@
 
-def import_class(class_path_str):
+def import_item(class_path_str):
     last_dot_pos = class_path_str.rfind(".")
     class_name = class_path_str[last_dot_pos + 1:len(class_path_str)]
     class_module = __import__(
