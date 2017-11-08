@@ -44,6 +44,7 @@ def is_url(context, value, original_value):
         raise ValidationError(_('This field must be a valid url'))
     return value
 
+
 SHARED_SCHEMA_TENANTS = {
     "DEFAULT_TENANT_EXTRA_DATA_FIELDS": {
         'logo': {
