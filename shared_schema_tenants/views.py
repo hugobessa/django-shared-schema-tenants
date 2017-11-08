@@ -3,7 +3,7 @@ from django.db import transaction
 
 from shared_schema_tenants.models import Tenant, TenantSite
 from shared_schema_tenants.permissions import DjangoTenantModelPermissions
-from shared_schema_tenants.utils import import_class
+from shared_schema_tenants.utils import import_item
 from shared_schema_tenants.settings import get_setting
 from shared_schema_tenants.helpers.tenants import get_current_tenant
 
@@ -17,7 +17,7 @@ class TenantListView(generics.ListCreateAPIView):
         return super(TenantListView, self).get_permissions()
 
     def get_serializer_class(self):
-        return import_class(get_setting('TENANT_SERIALIZER'))
+        return import_item(get_setting('TENANT_SERIALIZER'))
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -31,7 +31,7 @@ class TenantDetailsView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [DjangoTenantModelPermissions]
 
     def get_serializer_class(self):
-        return import_class(get_setting('TENANT_SERIALIZER'))
+        return import_item(get_setting('TENANT_SERIALIZER'))
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -48,7 +48,7 @@ class TenantSettingsDetailsView(views.APIView):
     permission_classes = [DjangoTenantModelPermissions]
 
     def get_serializer_class(self):
-        return import_class(get_setting('TENANT_SETTINGS_SERIALIZER'))
+        return import_item(get_setting('TENANT_SETTINGS_SERIALIZER'))
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -81,7 +81,7 @@ class TenantSiteListView(generics.ListCreateAPIView):
     permission_classes = [DjangoTenantModelPermissions]
 
     def get_serializer_class(self):
-        return import_class(get_setting('TENANT_SITE_SERIALIZER'))
+        return import_item(get_setting('TENANT_SITE_SERIALIZER'))
 
     def get_queryset(self):
         return TenantSite.objects.all()
@@ -98,7 +98,7 @@ class TenantSiteDetailsView(generics.DestroyAPIView):
     permission_classes = [DjangoTenantModelPermissions]
 
     def get_serializer_class(self):
-        return import_class(get_setting('TENANT_SITE_SERIALIZER'))
+        return import_item(get_setting('TENANT_SITE_SERIALIZER'))
 
     def get_queryset(self):
         return TenantSite.objects.all()

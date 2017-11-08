@@ -11,9 +11,6 @@ from django.test.utils import get_runner
 
 
 def run_tests(*args, **kwargs):
-    if not args:
-        args = ['tests']
-
     os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
     django.setup()
     TestRunner = get_runner(settings)
@@ -28,6 +25,7 @@ def process_kwargs(kwarg):
 
     else:
         return (kwarg, True)
+
 
 if __name__ == '__main__':
 
