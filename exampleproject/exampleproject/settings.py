@@ -128,3 +128,10 @@ STATIC_URL = '/static/'
 SHARED_SCHEMA_TENANTS = {
     'DEFAULT_TENANT_SLUG': 'default',
 }
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'shared_schema_tenants.auth_backends.TenantModelBackend'
+]
+
