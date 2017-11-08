@@ -48,7 +48,7 @@ class TenantSpecificFieldDefinition(SingleTenantModelMixin):
     table_id = models.PositiveIntegerField(blank=True, null=True)
 
     class Meta:
-        unique_together = [('tenant', 'table', 'name')]
+        unique_together = [('tenant', 'table_id', 'table_content_type', 'name')]
 
     def __str__(self):
         content_type = '%s/%s' % (self.tenant.slug, str(self.content_type))
