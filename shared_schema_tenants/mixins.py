@@ -1,12 +1,12 @@
 from django.db import models
 import django.utils.version
-from shared_schema_tenants.settings import DEFAULT_TENANT_SLUG
+from shared_schema_tenants.settings import get_setting
 from shared_schema_tenants.managers import SingleTenantModelManager, MultipleTenantModelManager
 from shared_schema_tenants.models import Tenant
 
 
 def get_default_tenant():
-    return Tenant.objects.filter(slug=DEFAULT_TENANT_SLUG).first()
+    return Tenant.objects.filter(slug=get_setting('DEFAULT_TENANT_SLUG')).first()
 
 
 class SingleTenantModelMixin(models.Model):
