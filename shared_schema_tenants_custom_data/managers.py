@@ -18,20 +18,36 @@ class TenantSpecificFieldsModelManager(models.Manager):
         'date': models.DateField(),
     }
 
-    def get_queryset(self, *args, **kwargs):
-        custom_fields_annotations = self._get_custom_fields_annotations()
+    def get_queryset(self, table_id=-1, *args, **kwargs):
+        from shared_schema_tenants_custom_data.models import TenantSpecificTableRow
+        custom_fields_annotations = self._get_custom_fields_annotations(table_id)
+
+        queryset = super(TenantSpecificFieldsModelManager, self).get_queryset(*args, **kwargs)
 
         if len(custom_fields_annotations.keys()) > 0:
-            return super().annotate(**custom_fields_annotations).get_queryset(*args, **kwargs)
+            if self.model == TenantSpecificTableRow:
+                return (
+                    queryset
+                    .annotate(**custom_fields_annotations)
+                    .filter(table_id=table_id)
+                )
+            return queryset.annotate(**custom_fields_annotations)
 
-        return super().get_queryset(*args, **kwargs)
+        if self.model == TenantSpecificTableRow:
+            return queryset.filter(table_id=table_id)
+        return queryset
 
-    def _get_custom_fields_annotations(self):
+    def _get_custom_fields_annotations(self, table_id=-1):
         from shared_schema_tenants_custom_data.models import (
-            TenantSpecificFieldDefinition, TenantSpecificFieldChunk)
+            TenantSpecificFieldDefinition, TenantSpecificFieldChunk, TenantSpecificTable, TenantSpecificTableRow)
 
-        definitions = TenantSpecificFieldDefinition.objects.filter(
-            table__content_type=ContentType.objects.get_for_model(self.model))
+        if self.model == TenantSpecificTableRow:
+            definitions = TenantSpecificFieldDefinition.objects.filter(
+                table_content_type=ContentType.objects.get_for_model(TenantSpecificTable),
+                table_id=table_id)
+        else:
+            definitions = TenantSpecificFieldDefinition.objects.filter(
+                table_content_type=ContentType.objects.get_for_model(self.model))
         definitions_by_name = {d.name: d for d in definitions}
 
         custom_fields_annotations = {}
@@ -42,10 +58,8 @@ class TenantSpecificFieldsModelManager(models.Manager):
                 definitions_values = (
                     TenantSpecificFieldChunk.objects
                     .filter(definition_id=definitions_by_name[key].id, row_id=OuterRef('pk'))
-                    .aggregate(value=models.F('value_' + definitions_by_name[key].data_type))
-                    .values('value')
+                    .values(value=models.F('value_' + definitions_by_name[key].data_type))
                 )
-                definitions_values.query.group_by = []
 
                 custom_fields_annotations[key] = Subquery(
                     queryset=definitions_values,
@@ -53,18 +67,19 @@ class TenantSpecificFieldsModelManager(models.Manager):
                 )
             else:
                 from django.db.models.expressions import RawSQL
-                custom_fields_annotations[key] = RawSQL("""
-                        select c.value_%(data_type)s
+                model_content_type = ContentType.objects.get_for_model(self.model)
+                model_table_name = (model_content_type.app_label + '_' + model_content_type.model)
+                custom_fields_annotations[key] = RawSQL(
+                    """
+                        select c.value_""" + definitions_by_name[key].data_type + """
                         from shared_schema_tenants_custom_data_tenantspecificfieldchunk c
-                        where definition_id = %(definition_id)s and c.row_id = %(row_id)s
-                    """, params={
-                    'data_type': definitions_by_name[key].data_type,
-                    'definition_id': definitions_by_name[key].id,
-                    'row_id': models.F('pk')
-                }, output_field=self.data_type_fields[definitions_by_name[key].data_type])
+                        where definition_id = %s and
+                            c.row_id = """ + '"' + model_table_name + '"."' + self.model._meta.pk.name + '"',
+                    [definitions_by_name[key].id],
+                    output_field=self.data_type_fields[definitions_by_name[key].data_type])
 
         return custom_fields_annotations
 
 
-class TenantSpecificTableRowManager(SingleTenantModelManager, TenantSpecificFieldsModelManager):
+class TenantSpecificTableRowManager(TenantSpecificFieldsModelManager, SingleTenantModelManager):
     pass

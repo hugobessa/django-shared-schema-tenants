@@ -13,7 +13,7 @@ class TenantSpecificFieldsModelMixin(models.Model):
             TenantSpecificFieldDefinition, TenantSpecificFieldChunk)
 
         definitions = TenantSpecificFieldDefinition.objects.filter(
-            content_type=ContentType.objects.get_for_model(self.model))
+            table_content_type=ContentType.objects.get_for_model(type(self)))
         definitions_by_name = {d.name: d for d in definitions}
 
         with transaction.atomic():
@@ -29,7 +29,7 @@ class TenantSpecificFieldsModelMixin(models.Model):
 
         old = self.__class__.objects.get(self.pk)
         definitions = TenantSpecificFieldDefinition.objects.filter(
-            table__content_type=ContentType.objects.get_for_model(self.model))
+            table_content_type=ContentType.objects.get_for_model(type(self)))
         definitions_by_name = {d.name: d for d in definitions}
 
         with transaction.atomic():

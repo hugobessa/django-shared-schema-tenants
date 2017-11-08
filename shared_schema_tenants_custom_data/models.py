@@ -51,14 +51,14 @@ class TenantSpecificFieldDefinition(SingleTenantModelMixin):
         unique_together = [('tenant', 'table_id', 'table_content_type', 'name')]
 
     def __str__(self):
-        content_type = '%s/%s' % (self.tenant.slug, str(self.content_type))
+        content_type = '%s/%s' % (self.tenant.slug, str(self.table_content_type))
         if content_type == 'shared_schema_tenants.TenantSpecificTable':
             content_type = str(self.table)
 
         return '%s/%s' % (content_type, self.name)
 
 
-class TenantSpecificFieldChunk(models.Model):
+class TenantSpecificFieldChunk(SingleTenantModelMixin):
     value_integer = models.IntegerField(blank=True, null=True)
     value_char = models.CharField(max_length=255, blank=True, null=True)
     value_text = models.TextField(blank=True, null=True)
@@ -94,7 +94,6 @@ class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpe
     tenant_objects = TenantSpecificTableRowManager()
 
     class Meta:
-        abstract = True
         if django.utils.version.get_complete_version()[1] >= 10:
             default_manager_name = 'original_manager'
             base_manager_name = 'original_manager'
