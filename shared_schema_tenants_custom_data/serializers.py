@@ -5,16 +5,11 @@ from django.utils.text import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.fields import get_error_detail, set_value
 from rest_framework.fields import SkipField
+from shared_schema_tenants.utils import import_item
 from shared_schema_tenants_custom_data.models import (
     TenantSpecificFieldDefinition, TenantSpecificFieldChunk, TenantSpecificTable,
     TenantSpecificTableRow)
-from shared_schema_tenants.utils import import_item
-
-
-def compose_list(funcs):
-    def inner(data, funcs=funcs):
-        return inner(funcs[-1](data), funcs[:-1]) if funcs else data
-    return inner
+from shared_schema_tenants_custom_data.utils import compose_list
 
 
 class TenantSpecificFieldDefinitionCreateSerializer(serializers.ModelSerializer):
@@ -67,7 +62,7 @@ class TenantSpecificModelSerializer(serializers.ModelSerializer):
     serializer_tenant_specific_field_mapping = {
         'integer': serializers.IntegerField,
         'char': serializers.CharField,
-        'text': serializers.TextField,
+        'text': serializers.CharField,
         'float': serializers.FloatField,
         'datetime': serializers.DateTimeField,
         'date': serializers.DateField,
@@ -80,17 +75,18 @@ class TenantSpecificModelSerializer(serializers.ModelSerializer):
             table_content_type=ContentType.objects.get_from_model(ModelClass))
 
         for definition in self.tenant_specific_fields_definitions:
-            field_kwargs = {}
-            if definition.is_required:
-                field_kwargs.update({
-                    'required': True,
-                    'allow_null': True
-                })
-            if definition.default_value is not None:
-                field_kwargs.update({'default': definition.default_value})
+            if not hasattr(self, definition.name):
+                field_kwargs = {}
+                if definition.is_required:
+                    field_kwargs.update({
+                        'required': True,
+                        'allow_null': True
+                    })
+                if definition.default_value is not None:
+                    field_kwargs.update({'default': definition.default_value})
 
-            setattr(self, definition.name,
-                    self.serializer_tenant_specific_field_mapping[definition.data_type](**field_kwargs))
+                setattr(self, definition.name,
+                        self.serializer_tenant_specific_field_mapping[definition.data_type](**field_kwargs))
 
         super(TenantSpecificModelSerializer, self).__init__(*args, **kwargs)
 
