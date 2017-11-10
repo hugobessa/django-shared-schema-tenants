@@ -5,11 +5,16 @@ branch = true
 omit =
     *site-packages*
     *tests*
+    *migrations*
     *.tox
     exampleproject/*
     shared_schema_tenants/urls.py
     shared_schema_tenants/admin.py
+    shared_schema_tenants/apps.py
     shared_schema_tenants/management/**/*.py
+    shared_schema_tenants_custom_data/urls.py
+    shared_schema_tenants_custom_data/admin.py
+    shared_schema_tenants_custom_data/apps.py
 show_missing = True
 exclude_lines =
     raise NotImplementedError
