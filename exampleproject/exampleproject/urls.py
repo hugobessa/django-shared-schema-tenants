@@ -16,7 +16,12 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 
+from shared_schema_tenants import urls as shared_schema_tenants_urls
+from shared_schema_tenants_custom_data import urls as shared_schema_tenants_custom_data_urls
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/articles/', include('exampleapp.urls', namespace='exampleapp')),
+    url(r'^', include(shared_schema_tenants_urls)),
+    url(r'^', include(shared_schema_tenants_custom_data_urls)),
 ]
