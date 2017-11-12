@@ -40,7 +40,7 @@ coverage: ## check code coverage quickly with the default Python
 	coverage run --source shared_schema_tenants,shared_schema_tenants_custom_data runtests.py
 	coverage report -m
 	coverage html
-	open htmlcov/index.html
+	xdg-open htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/django-shared-schema-tenants.rst

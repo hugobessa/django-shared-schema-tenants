@@ -18,9 +18,9 @@ class TenantSpecificFieldsModelMixin(models.Model):
                 self.tenant_specific_fields_data[definition.name] = kwargs.pop(definition.name)
         super(TenantSpecificFieldsModelMixin, self).__init__(*args, **kwargs)
 
-    def get_definitions(self, table_id=-1):
+    def get_definitions(self, table_id=-1, force_hit_db=False):
         from shared_schema_tenants_custom_data.models import TenantSpecificFieldDefinition, TenantSpecificTable
-        if not hasattr(self, 'definitions'):
+        if not hasattr(self, 'definitions') or force_hit_db:
             if type(self).__name__ == 'TenantSpecificTableRow':
                 self.definitions = TenantSpecificFieldDefinition.objects.filter(
                     table_content_type=ContentType.objects.get_for_model(TenantSpecificTable),
@@ -47,7 +47,7 @@ class TenantSpecificFieldsModelMixin(models.Model):
     def update_tenant_specific_fields(self):
         from shared_schema_tenants_custom_data.models import TenantSpecificFieldChunk
 
-        old = self.__class__.objects.get(self.pk)
+        old = self.__class__.objects.get(pk=self.pk)
         definitions = self.get_definitions()
         definitions_by_name = {d.name: d for d in definitions}
 
@@ -61,7 +61,13 @@ class TenantSpecificFieldsModelMixin(models.Model):
                         **{('value_' + definition.data_type): new_value})
 
     def save(self, *args, **kwargs):
-        definitions = self.get_definitions()
+        table_id = getattr(self, 'table_id', getattr(getattr(self, 'table'), 'id', None))
+
+        force_hit_db = False
+        if hasattr(self, 'definitions') and not self.definitions.exists():
+            force_hit_db = True
+
+        definitions = self.get_definitions(table_id=table_id, force_hit_db=force_hit_db)
         for definition in definitions:
             if definition.name not in self.tenant_specific_fields_data.keys():
                 if hasattr(self, definition.name):

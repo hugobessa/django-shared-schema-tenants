@@ -17,7 +17,7 @@ urlpatterns = [
         name='custom_tables_details'
     ),
     url(
-        regex=r'^/(?P<slug>[\w.@+-]+)/$',
+        regex=r'^(?P<slug>[\w.@+-]+)/$',
         view=views.TenantSpecificTableRowViewset.as_view({
             'get': 'list',
             'post': 'create',
@@ -25,7 +25,7 @@ urlpatterns = [
         name='custom_data_list'
     ),
     url(
-        regex=r'^/(?P<slug>[\w.@+-]+)/(?P<pk>[\d]+)/$',
+        regex=r'^(?P<slug>[\w.@+-]+)/(?P<pk>[\d]+)/$',
         view=views.TenantSpecificTableRowViewset.as_view({
             'get': 'retrieve',
             'put': 'update',

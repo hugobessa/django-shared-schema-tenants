@@ -1,5 +1,5 @@
 import django
-from django.db import models
+from django.db import models, transaction
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
@@ -42,7 +42,7 @@ class TenantSpecificFieldDefinition(SingleTenantModelMixin):
     data_type = StatusField(choices_name='DATA_TYPES')
     is_required = models.BooleanField(default=False)
     default_value = models.TextField()
-    validators = models.ManyToManyField('TenantSpecificFieldsValidator')
+    validators = models.ManyToManyField('TenantSpecificFieldsValidator', blank=True)
 
     table_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     table_id = models.PositiveIntegerField(blank=True, null=True)
@@ -104,3 +104,22 @@ class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpe
     @property
     def fields_definitions(self):
         return self.table.fields_definitions
+
+    def update_tenant_specific_fields(self):
+        from shared_schema_tenants_custom_data.models import TenantSpecificFieldChunk
+        from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import get_custom_table_manager
+
+        old = get_custom_table_manager(self.table.name).get(pk=self.pk)
+        definitions = self.get_definitions()
+        definitions_by_name = {d.name: d for d in definitions}
+
+        with transaction.atomic():
+            for field_name, definition in definitions_by_name.items():
+                new_value = self.tenant_specific_fields_data.get(
+                    field_name, None)
+                old_value = getattr(old, field_name, None)
+                if new_value != old_value:
+                    TenantSpecificFieldChunk.objects.filter(
+                        definition_id=definition.id, row_id=self.id,
+                        row_content_type=ContentType.objects.get_for_model(self.__class__)
+                    ).update(**{('value_' + definition.data_type): new_value})

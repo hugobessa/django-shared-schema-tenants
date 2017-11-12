@@ -102,7 +102,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tenantspecificfielddefinition',
             name='validators',
-            field=models.ManyToManyField(to='shared_schema_tenants_custom_data.TenantSpecificFieldsValidator'),
+            field=models.ManyToManyField(to='shared_schema_tenants_custom_data.TenantSpecificFieldsValidator', blank=True),
         ),
         migrations.AddField(
             model_name='tenantspecificfieldchunk',
