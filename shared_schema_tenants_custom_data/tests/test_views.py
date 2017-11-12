@@ -67,8 +67,10 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
         get_params_dict = {
             'search': 'lecture',
         }
-
-        get_params = urllib.parse.urlencode(get_params_dict, doseq=True)
+        try:
+            get_params = urllib.parse.urlencode(get_params_dict, doseq=True)
+        except AttributeError:
+            get_params = urllib.urlencode(get_params_dict, doseq=True)
 
         response = self.client.get(
             self.view_url + '?' + get_params, HTTP_TENANT_SLUG=self.tenant.slug)
@@ -85,7 +87,10 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
             'filter': '_custom_tables',
         }
 
-        get_params = urllib.parse.urlencode(get_params_dict, doseq=True)
+        try:
+            get_params = urllib.parse.urlencode(get_params_dict, doseq=True)
+        except AttributeError:
+            get_params = urllib.urlencode(get_params_dict, doseq=True)
 
         response = self.client.get(
             self.view_url + '?' + get_params, HTTP_TENANT_SLUG=self.tenant.slug)
@@ -102,7 +107,10 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
             'filter': 'customizable_models',
         }
 
-        get_params = urllib.parse.urlencode(get_params_dict, doseq=True)
+        try:
+            get_params = urllib.parse.urlencode(get_params_dict, doseq=True)
+        except AttributeError:
+            get_params = urllib.urlencode(get_params_dict, doseq=True)
 
         response = self.client.get(
             self.view_url + '?' + get_params, HTTP_TENANT_SLUG=self.tenant.slug)
@@ -120,7 +128,10 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
             'length': 4,
         }
 
-        get_params = urllib.parse.urlencode(get_params_dict, doseq=True)
+        try:
+            get_params = urllib.parse.urlencode(get_params_dict, doseq=True)
+        except AttributeError:
+            get_params = urllib.urlencode(get_params_dict, doseq=True)
 
         response = self.client.get(
             self.view_url + '?' + get_params, HTTP_TENANT_SLUG=self.tenant.slug)
