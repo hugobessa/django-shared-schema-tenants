@@ -7,7 +7,7 @@ from shared_schema_tenants_custom_data.managers import TenantSpecificFieldsModel
 
 
 class TenantSpecificFieldsModelMixin(models.Model):
-    objects = TenantSpecificFieldsModelManager
+    objects = TenantSpecificFieldsModelManager()
 
     def __init__(self, *args, **kwargs):
         table_id = kwargs.get('table_id', getattr(kwargs.get('table'), 'id', None))
@@ -61,7 +61,7 @@ class TenantSpecificFieldsModelMixin(models.Model):
                         **{('value_' + definition.data_type): new_value})
 
     def save(self, *args, **kwargs):
-        table_id = getattr(self, 'table_id', getattr(getattr(self, 'table'), 'id', None))
+        table_id = getattr(self, 'table_id', getattr(getattr(self, 'table', object()), 'id', None))
 
         force_hit_db = False
         if hasattr(self, 'definitions') and not self.definitions.exists():

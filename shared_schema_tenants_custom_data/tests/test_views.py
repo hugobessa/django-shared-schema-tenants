@@ -5,7 +5,7 @@ from django.shortcuts import reverse
 from django.test import override_settings
 
 from tests.utils import SharedSchemaTenantsAPITestCase
-from exampleproject.example_custom_data.models import Lecture
+from exampleproject.lectures.models import Lecture
 from shared_schema_tenants.helpers.tenants import set_current_tenant
 from shared_schema_tenants_custom_data.models import (
     TenantSpecificTable, TenantSpecificFieldDefinition, TenantSpecificFieldChunk)
@@ -48,7 +48,7 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
 
     @override_settings(
         SHARED_SCHEMA_TENANTS_CUSTOM_DATA={
-            'CUSTOMIZABLE_MODELS': ['example_custom_data.Lecture']
+            'CUSTOMIZABLE_MODELS': ['lectures.Lecture']
         }
     )
     def test_correct_number_of_tables_with_customizable_models(self):
@@ -60,7 +60,7 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
 
     @override_settings(
         SHARED_SCHEMA_TENANTS_CUSTOM_DATA={
-            'CUSTOMIZABLE_MODELS': ['example_custom_data.Lecture']
+            'CUSTOMIZABLE_MODELS': ['lectures.Lecture']
         }
     )
     def test_search_results_correctly(self):
@@ -79,7 +79,7 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
 
     @override_settings(
         SHARED_SCHEMA_TENANTS_CUSTOM_DATA={
-            'CUSTOMIZABLE_MODELS': ['example_custom_data.Lecture']
+            'CUSTOMIZABLE_MODELS': ['lectures.Lecture']
         }
     )
     def test_filters_custom_tables_results_correctly(self):
@@ -99,7 +99,7 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
 
     @override_settings(
         SHARED_SCHEMA_TENANTS_CUSTOM_DATA={
-            'CUSTOMIZABLE_MODELS': ['example_custom_data.Lecture']
+            'CUSTOMIZABLE_MODELS': ['lectures.Lecture']
         }
     )
     def test_filters_customizable_models_results_correctly(self):
@@ -119,7 +119,7 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
 
     @override_settings(
         SHARED_SCHEMA_TENANTS_CUSTOM_DATA={
-            'CUSTOMIZABLE_MODELS': ['example_custom_data.Lecture']
+            'CUSTOMIZABLE_MODELS': ['lectures.Lecture']
         }
     )
     def test_paginate_results_correctly(self):
@@ -174,7 +174,7 @@ class CustomTablesDetailsTests(SharedSchemaTenantsAPITestCase):
             kwargs={'slug': '_custom_tables__' + self.tables[0].name})
         self.customizable_model_view_url = reverse(
             'shared_schema_tenants_custom_data:custom_tables_details',
-            kwargs={'slug': 'example_custom_data__lecture'})
+            kwargs={'slug': 'lectures__lecture'})
 
         self.params = [
             {
@@ -343,3 +343,65 @@ class TenantSpecificTableRowViewsetTests(SharedSchemaTenantsAPITestCase):
             self.assertEqual(
                 getattr(get_custom_table_manager(self.table.name).get(id=self.row.id), key),
                 value)
+
+
+class LecturesViewSetTests(SharedSchemaTenantsAPITestCase):
+
+    def setUp(self):
+        super(LecturesViewSetTests, self).setUp()
+        self.lecture_fields = mommy.make(
+            'shared_schema_tenants_custom_data.TenantSpecificFieldDefinition',
+            table_content_type=ContentType.objects.get_for_model(Lecture),
+            data_type=TenantSpecificFieldDefinition.DATA_TYPES.integer, default_value='1',
+            tenant=self.tenant, _quantity=2)
+
+        lecture_fields_values = {
+            lf.name: i + 100
+            for i, lf in enumerate(self.lecture_fields)
+        }
+        self.lecture = mommy.make('lectures.Lecture', **lecture_fields_values)
+
+        self.list_view_url = reverse('lectures:list')
+        self.details_view_url = reverse(
+            'lectures:details', kwargs={'pk': self.lecture.pk})
+
+        self.client.force_login(self.user)
+
+        self.params = {
+            'subject': "Test",
+            'description': ("Lorem ipsum dolor sit amet consectetur adipisicing elit. "
+                            "Recusandae, qui? Voluptate reprehenderit vel mollitia, "
+                            "placeat et aperiam sit voluptatibus eum deserunt corrupti "
+                            "nulla quidem nesciunt atque dicta, accusantium ipsam at?"),
+            'speaker': self.user.id,
+        }
+        self.params.update({f.name: i + 1000 for i, f in enumerate(self.lecture_fields)})
+
+    def test_list(self):
+        response = self.client.get(
+            self.list_view_url, HTTP_TENANT_SLUG=self.tenant.slug)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertIn(self.lecture_fields[0].name, response.data[0].keys())
+        self.assertIn(self.lecture_fields[1].name, response.data[0].keys())
+
+    def test_retrieve(self):
+        response = self.client.get(
+            self.details_view_url, HTTP_TENANT_SLUG=self.tenant.slug)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_create(self):
+        response = self.client.post(
+            self.list_view_url, self.params, format='json', HTTP_TENANT_SLUG=self.tenant.slug)
+
+        self.assertEqual(response.status_code, 201)
+
+        set_current_tenant(self.tenant.slug)
+        new_lecture = Lecture.objects.get(id=response.data['id'])
+        for key, value in self.params.items():
+            if key != 'speaker':
+                self.assertEqual(getattr(new_lecture, key), value)
+            else:
+                self.assertEqual(getattr(new_lecture, key).pk, value)

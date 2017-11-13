@@ -1,7 +1,7 @@
 from django.test import TestCase
 import django.utils.version
 from model_mommy import mommy
-from exampleproject.exampleapp.models import Article, Tag
+from exampleproject.articles.models import Article, Tag
 from shared_schema_tenants.helpers.tenants import create_tenant, set_current_tenant, clear_current_tenant
 from shared_schema_tenants.exceptions import TenantNotFoundError
 

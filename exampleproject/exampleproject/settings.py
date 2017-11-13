@@ -41,7 +41,9 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'shared_schema_tenants.apps.SharedSchemaTenantsConfig',
-    'exampleapp.apps.ExampleappConfig',
+    'shared_schema_tenants_custom_data.apps.SharedSchemaTenantsCustomDataConfig',
+    'articles.apps.ArticlesConfig',
+    'lectures.apps.LecturesConfig',
 ]
 
 MIDDLEWARE = [

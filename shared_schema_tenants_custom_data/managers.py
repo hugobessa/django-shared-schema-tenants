@@ -16,9 +16,11 @@ class TenantSpecificFieldsModelBaseManager(BaseManager):
 
         def create_method(name, method):
             def manager_method(self, *args, **kwargs):
-                table_id = self.table_id
-                kwargs['table_id'] = table_id
-                return getattr(self.get_queryset(table_id=table_id), name)(*args, **kwargs)
+                if self.model.__name__ == 'TenantSpecificTableRow':
+                    table_id = getattr(self, 'table_id', None)
+                    kwargs['table_id'] = table_id
+                    return getattr(self.get_queryset(table_id=table_id), name)(*args, **kwargs)
+                return getattr(self.get_queryset(), name)(*args, **kwargs)
             manager_method.__name__ = method.__name__
             manager_method.__doc__ = method.__doc__
             return manager_method
@@ -52,12 +54,16 @@ class TenantSpecificFieldsModelManager(
 
     def get_queryset(self, *args, **kwargs):
         from shared_schema_tenants_custom_data.models import TenantSpecificTableRow
-        if not hasattr(self, 'table_id'):
-            self.table_id = kwargs.get('table_id', -1)
-        else:
-            kwargs['table_id'] = self.table_id
-        custom_fields_annotations = self._get_custom_fields_annotations()
 
+        if self.model != TenantSpecificTableRow:
+            kwargs.pop('table_id', None)
+        else:
+            if not hasattr(self, 'table_id'):
+                self.table_id = kwargs.get('table_id', -1)
+            else:
+                kwargs['table_id'] = self.table_id
+
+        custom_fields_annotations = self._get_custom_fields_annotations()
         queryset = super(TenantSpecificFieldsModelManager, self).get_queryset(*args, **kwargs)
 
         if len(custom_fields_annotations.keys()) > 0:

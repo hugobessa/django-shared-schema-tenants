@@ -9,7 +9,7 @@ import django.db.models.manager
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('exampleapp', '0001_initial'),
+        ('articles', '0001_initial'),
     ]
 
     operations = [

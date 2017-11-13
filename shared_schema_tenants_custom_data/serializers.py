@@ -91,6 +91,9 @@ class TenantSpecificModelSerializer(serializers.ModelSerializer):
         self.tenant_specific_fields_definitions = TenantSpecificFieldDefinition.objects.filter(
             table_content_type=ContentType.objects.get_for_model(ModelClass))
 
+        self.tenant_specific_fields_names = list(
+            self.tenant_specific_fields_definitions.values_list('name', flat=True))
+
         for definition in self.tenant_specific_fields_definitions:
             if not hasattr(self, definition.name):
                 field_kwargs = {}
@@ -106,6 +109,10 @@ class TenantSpecificModelSerializer(serializers.ModelSerializer):
                         self.serializer_tenant_specific_field_mapping[definition.data_type](**field_kwargs))
 
         super(TenantSpecificModelSerializer, self).__init__(*args, **kwargs)
+
+    def get_field_names(self, declared_fields, info):
+        fields = super(TenantSpecificModelSerializer, self).get_field_names(declared_fields, info)
+        return fields + self.tenant_specific_fields_names
 
     def to_internal_value(self, data):
         ret = OrderedDict()
@@ -143,7 +150,9 @@ class TenantSpecificModelSerializer(serializers.ModelSerializer):
         return ret
 
     def build_field(self, field_name, info, model_class, nested_depth):
-        if field_name in list(self.tenant_specific_fields_definitions.values_list('name', flat=True)):
+        tenat_specific_fields_names = list(
+            self.tenant_specific_fields_definitions.values_list('name', flat=True))
+        if field_name in tenat_specific_fields_names:
             definition = self.tenant_specific_fields_definitions.get(name=field_name)
             return self.build_standard_field(field_name, self.data_type_fields[definition.data_type])
 
@@ -152,7 +161,7 @@ class TenantSpecificModelSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         ModelClass = self.Meta.model
-        instance = super(TenantSpecificModelSerializer, self).create(**validated_data)
+        instance = ModelClass.objects.create(**validated_data)
         return ModelClass.objects.get(pk=instance.pk)
 
     def update(self, instance, validated_data):

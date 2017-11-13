@@ -54,6 +54,7 @@ setup(
     url='https://github.com/hugobessa/django-shared-schema-tenants',
     packages=[
         'shared_schema_tenants',
+        'shared_schema_tenants_custom_data',
     ],
     include_package_data=True,
     install_requires=["django-model-utils>=2.0"],

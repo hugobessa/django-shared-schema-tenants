@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='article',
             name='tags',
-            field=models.ManyToManyField(to='exampleapp.Tag'),
+            field=models.ManyToManyField(to='articles.Tag'),
         ),
         migrations.AddField(
             model_name='article',
