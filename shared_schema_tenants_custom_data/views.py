@@ -128,7 +128,15 @@ class CustomTableDetails(generics.RetrieveUpdateDestroyAPIView):
         app = table_slug_parts[0]
 
         if app == get_setting('CUSTOM_TABLES_LABEL'):
-            context = self.get_custom_table_serializer_context(table_slug_parts[-1])
+            try:
+                context = self.get_custom_table_serializer_context(table_slug_parts[-1])
+            except TenantSpecificTable.DoesNotExist:
+                new_table = TenantSpecificTable.objects.create(name=table_slug_parts[-1])
+                context = {
+                    'table_content_type': ContentType.objects.get_for_model(TenantSpecificTable),
+                    'table_id': new_table.id,
+                }
+
         else:
             context = self.get_customizable_model_serializer_context(table_slug)
 

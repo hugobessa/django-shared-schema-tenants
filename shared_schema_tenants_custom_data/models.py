@@ -105,7 +105,7 @@ class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpe
     def fields_definitions(self):
         return self.table.fields_definitions
 
-    def update_tenant_specific_fields(self):
+    def update_tenant_specific_fields(self, tenant_specific_fields_data):
         from shared_schema_tenants_custom_data.models import TenantSpecificFieldChunk
         from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import get_custom_table_manager
 
@@ -115,7 +115,7 @@ class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpe
 
         with transaction.atomic():
             for field_name, definition in definitions_by_name.items():
-                new_value = self.tenant_specific_fields_data.get(
+                new_value = tenant_specific_fields_data.get(
                     field_name, None)
                 old_value = getattr(old, field_name, None)
                 if new_value != old_value:
