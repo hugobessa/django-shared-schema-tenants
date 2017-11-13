@@ -405,3 +405,17 @@ class LecturesViewSetTests(SharedSchemaTenantsAPITestCase):
                 self.assertEqual(getattr(new_lecture, key), value)
             else:
                 self.assertEqual(getattr(new_lecture, key).pk, value)
+
+    def test_update(self):
+        response = self.client.put(
+            self.details_view_url, self.params, format='json', HTTP_TENANT_SLUG=self.tenant.slug)
+
+        self.assertEqual(response.status_code, 200)
+
+        set_current_tenant(self.tenant.slug)
+        updated_lecture = Lecture.objects.get(id=response.data['id'])
+        for key, value in self.params.items():
+            if key != 'speaker':
+                self.assertEqual(getattr(updated_lecture, key), value)
+            else:
+                self.assertEqual(getattr(updated_lecture, key).pk, value)

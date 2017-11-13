@@ -41,7 +41,8 @@ class TenantSpecificFieldsModelMixin(models.Model):
                 field_value = self.tenant_specific_fields_data.get(
                     field_name, getattr(self, field_name, None))
                 TenantSpecificFieldChunk.objects.create(
-                    definition_id=definition.id, row=self,
+                    definition_id=definition.id, row_id=self.id,
+                    row_content_type=ContentType.objects.get_for_model(self.__class__),
                     **{('value_' + definition.data_type): field_value})
 
     def update_tenant_specific_fields(self):
@@ -57,7 +58,9 @@ class TenantSpecificFieldsModelMixin(models.Model):
                 old_value = getattr(old, field_name, None)
                 if new_value != old_value:
                     TenantSpecificFieldChunk.objects.filter(
-                        definition_id=definition.id, row=self).update(
+                        definition_id=definition.id, row_id=self.id,
+                        row_content_type=ContentType.objects.get_for_model(self.__class__)
+                    ).update(
                         **{('value_' + definition.data_type): new_value})
 
     def save(self, *args, **kwargs):

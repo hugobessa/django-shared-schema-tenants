@@ -6,7 +6,6 @@ from django.utils.text import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.fields import get_error_detail, set_value
 from rest_framework.fields import SkipField
-from rest_framework.relations import PKOnlyObject
 from shared_schema_tenants.utils import import_item
 from shared_schema_tenants_custom_data.models import (
     TenantSpecificFieldDefinition, TenantSpecificTable, TenantSpecificTableRow)
