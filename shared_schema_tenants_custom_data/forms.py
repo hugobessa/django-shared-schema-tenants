@@ -26,9 +26,13 @@ class TenantSpecificModelForm(forms.ModelForm):
 
         self.tenant_specific_fields_definitions = TenantSpecificFieldDefinition.objects.filter(
             table_content_type=ContentType.objects.get_for_model(ModelClass))
+        self.tenant_specific_fields_names = list(
+            self.tenant_specific_fields_definitions.values_list('name', flat=True))
+
+        super(TenantSpecificModelForm, self).__init__(*args, **kwargs)
 
         for definition in self.tenant_specific_fields_definitions:
-            if not hasattr(self, definition.name):
+            if not self.fields.get(definition.name, False):
                 field_kwargs = {}
                 if definition.is_required:
                     field_kwargs.update({
@@ -36,12 +40,11 @@ class TenantSpecificModelForm(forms.ModelForm):
                         'allow_null': True
                     })
                 if definition.default_value is not None:
-                    field_kwargs.update({'default': definition.default_value})
+                    field_kwargs.update(
+                        {'initial': definition.default_value})
 
-                setattr(self, definition.name,
-                        self.form_tenant_specific_field_mapping[definition.data_type](**field_kwargs))
-
-        super(TenantSpecificModelForm, self).__init__(*args, **kwargs)
+                self.fields[definition.name] = \
+                    self.form_tenant_specific_field_mapping[definition.data_type](**field_kwargs)
 
     def full_clean(self):
         """
@@ -66,11 +69,12 @@ class TenantSpecificModelForm(forms.ModelForm):
         tenant_specific_fields_names = self.tenant_specific_fields_definitions.values_list('name', flat=True)
         for name, field in self.fields.items():
             if name in tenant_specific_fields_names:
+                definition = self.tenant_specific_fields_definitions.get(name=name)
                 value = field.widget.value_from_datadict(self.data, self.files, self.add_prefix(name))
                 try:
                     value = field.clean(value)
                     validators = []
-                    for validator_instance in field.validators.all():
+                    for validator_instance in definition.validators.all():
                         validator_function = import_item(validator_instance.module_path)
                         validators.append(validator_function)
 
@@ -105,6 +109,16 @@ class TenantSpecificModelForm(forms.ModelForm):
                         self.cleaned_data[name] = value
                 except ValidationError as e:
                     self.add_error(name, e)
+
+    def _post_clean(self):
+        super()._post_clean()
+        for name, value in [(k, v) for k, v in self.cleaned_data.items() if k in self.tenant_specific_fields_names]:
+            setattr(self.instance, name, value)
+
+    def save(self, *args, **kwargs):
+        ModelClass = self.Meta.model
+        new_instance = super(TenantSpecificModelForm, self).save(*args, **kwargs)
+        return ModelClass.objects.get(id=new_instance.id)
 
 
 def get_tenant_specific_table_row_form_class(table_name):
@@ -157,9 +171,6 @@ def get_tenant_specific_table_row_form_class(table_name):
             'datetime': forms.DateTimeField,
             'date': forms.DateField,
         }
-
-        def __init__(self, *args, **kwargs):
-            super(TenantSpecificTableRowForm, self).__init__(*args, **kwargs)
 
         def full_clean(self):
             """
