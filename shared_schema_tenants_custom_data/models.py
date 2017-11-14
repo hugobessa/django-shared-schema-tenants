@@ -1,4 +1,3 @@
-import django
 from django.db import models, transaction
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -55,7 +54,7 @@ class TenantSpecificFieldDefinition(SingleTenantModelMixin):
         if content_type == 'shared_schema_tenants.TenantSpecificTable':
             content_type = str(self.table)
 
-        return '%s/%s' % (content_type, self.name)
+        return '%s.%s' % (content_type, self.name)
 
 
 class TenantSpecificFieldChunk(SingleTenantModelMixin):
@@ -70,7 +69,7 @@ class TenantSpecificFieldChunk(SingleTenantModelMixin):
 
     row_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     row_id = models.PositiveIntegerField()
-    row = GenericForeignKey('row_content_type', 'row_id')
+    row = GenericForeignKey(ct_field='row_content_type', fk_field='row_id')
 
     class Meta:
         unique_together = [('definition', 'row_id', 'row_content_type')]
@@ -83,20 +82,17 @@ class TenantSpecificFieldChunk(SingleTenantModelMixin):
 
 class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpecificFieldsModelMixin):
     table = models.ForeignKey('TenantSpecificTable', related_name='rows')
-    chunks = GenericRelation(TenantSpecificFieldChunk)
+    chunks = GenericRelation(
+        TenantSpecificFieldChunk, object_id_field='row_id', content_type_field='row_content_type')
 
-    if django.utils.version.get_complete_version()[1] < 10:
-        objects = models.Manager()
-    else:
-        objects = TenantSpecificTableRowManager()
+    objects = TenantSpecificTableRowManager()
 
     original_manager = models.Manager()
     tenant_objects = TenantSpecificTableRowManager()
 
     class Meta:
-        if django.utils.version.get_complete_version()[1] >= 10:
-            default_manager_name = 'original_manager'
-            base_manager_name = 'original_manager'
+        default_manager_name = 'original_manager'
+        base_manager_name = 'original_manager'
 
     def __str__(self):
         return ', '.join(str(value) for value in self.chunks.all())

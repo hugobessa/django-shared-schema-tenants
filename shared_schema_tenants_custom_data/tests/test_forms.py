@@ -17,12 +17,14 @@ class TenantSpecificTableRowFormTests(SharedSchemaTenantsAPITestCase):
         super(TenantSpecificTableRowFormTests, self).setUp()
         self.table = mommy.make(
             'shared_schema_tenants_custom_data.TenantSpecificTable', tenant=self.tenant)
+        self.validator_gt_2 = mommy.make(
+            'shared_schema_tenants_custom_data.TenantSpecificFieldsValidator',
+            module_path='shared_schema_tenants_custom_data.tests.validators.validator_gt_2')
         self.fields = mommy.make(
             'shared_schema_tenants_custom_data.TenantSpecificFieldDefinition', table_id=self.table.id,
-            table_content_type=ContentType.objects.get_for_model(
-                TenantSpecificTable),
+            table_content_type=ContentType.objects.get_for_model(TenantSpecificTable),
             data_type=TenantSpecificFieldDefinition.DATA_TYPES.integer, default_value='1',
-            tenant=self.tenant, _quantity=10)
+            tenant=self.tenant, validators=[self.validator_gt_2], _quantity=10)
 
         self.row = mommy.make(
             'shared_schema_tenants_custom_data.TenantSpecificTableRow', table=self.table, tenant=self.tenant)
@@ -50,6 +52,11 @@ class TenantSpecificTableRowFormTests(SharedSchemaTenantsAPITestCase):
                 value
             )
 
+    def test_create_invalid(self):
+        self.params[self.fields[0].name] = -100
+        form = get_tenant_specific_table_row_form_class(self.table.name)(data=self.params)
+        self.assertFalse(form.is_valid())
+
     def test_update(self):
         form = get_tenant_specific_table_row_form_class(self.table.name)(instance=self.row, data=self.params)
         self.assertTrue(form.is_valid())
@@ -66,11 +73,14 @@ class LectureFormTests(SharedSchemaTenantsAPITestCase):
 
     def setUp(self):
         super(LectureFormTests, self).setUp()
+        self.validator_gt_2 = mommy.make(
+            'shared_schema_tenants_custom_data.TenantSpecificFieldsValidator',
+            module_path='shared_schema_tenants_custom_data.tests.validators.validator_gt_2')
         self.lecture_fields = mommy.make(
             'shared_schema_tenants_custom_data.TenantSpecificFieldDefinition',
             table_content_type=ContentType.objects.get_for_model(Lecture),
             data_type=TenantSpecificFieldDefinition.DATA_TYPES.integer, default_value='1',
-            tenant=self.tenant, _quantity=2)
+            tenant=self.tenant, validators=[self.validator_gt_2], _quantity=2)
 
         lecture_fields_values = {
             lf.name: i + 100
@@ -108,6 +118,11 @@ class LectureFormTests(SharedSchemaTenantsAPITestCase):
                 )
             else:
                 self.assertEqual(getattr(instance, key).pk, value)
+
+    def test_create_invalid(self):
+        self.params[self.lecture_fields[0].name] = -100
+        form = LectureForm(data=self.params)
+        self.assertFalse(form.is_valid())
 
     def test_update(self):
         form = LectureForm(instance=self.lecture, data=self.params)

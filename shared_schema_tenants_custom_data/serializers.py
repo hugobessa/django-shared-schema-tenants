@@ -7,6 +7,7 @@ from rest_framework import serializers
 from rest_framework.fields import get_error_detail, set_value
 from rest_framework.fields import SkipField
 from shared_schema_tenants.utils import import_item
+from shared_schema_tenants_custom_data.settings import get_setting
 from shared_schema_tenants_custom_data.models import (
     TenantSpecificFieldDefinition, TenantSpecificTable, TenantSpecificTableRow)
 from shared_schema_tenants_custom_data.utils import compose_list
@@ -20,8 +21,8 @@ class TenantSpecificFieldDefinitionCreateSerializer(serializers.ModelSerializer)
         fields = ['id', 'name', 'data_type', 'is_required', 'default_value', 'validators']
 
     def create(self, validated_date):
-        table_content_type = self.context['table_content_type']
-        table_id = self.context.get('table_id')
+        table_content_type = getattr(self, 'table_content_type', None)
+        table_id = getattr(self, 'table_id', None)
 
         validators = validated_date.pop('validators', [])
         definition = TenantSpecificFieldDefinition.objects.create(
@@ -60,6 +61,153 @@ class TenantSpecificFieldDefinitionUpdateSerializer(serializers.ModelSerializer)
         instance.save()
 
         instance.validators.set(validated_date.get('validators', instance.validators))
+
+        return instance
+
+
+class TenantSpecificFieldsModelDefinitionsUpdateSerializer(serializers.ModelSerializer):
+
+    fields_definitions = serializers.JSONField()
+
+    class Meta:
+        model = ContentType
+        fields = ['fields_definitions']
+
+    def to_representation(self, obj):
+        return {
+            'name': '%s%s%s' % (
+                get_setting('CUSTOM_TABLES_LABEL'),
+                get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR'),
+                obj.name
+            ),
+            'fields_definitions': TenantSpecificFieldDefinitionCreateSerializer(
+                TenantSpecificFieldDefinition.objects.filter(table_content_type=obj),
+                many=True
+            ).data,
+        }
+
+    def validate_fields_definitions(self, definitions):
+        definitions_errors = []
+        definitions_serializers = []
+        definitions_have_errors = False
+        new_definitions_ids = [y['id'] for y in definitions if y.get('id', False)]
+        for definition_dict in definitions:
+            if definition_dict.get('id', False):
+                definition_serializer = TenantSpecificFieldDefinitionUpdateSerializer(
+                    TenantSpecificFieldDefinition.objects.get(id=definition_dict.get('id')),
+                    data=definition_dict, context=self.context)
+            else:
+                definition_serializer = TenantSpecificFieldDefinitionCreateSerializer(
+                    data=definition_dict, context=self.context)
+
+            if definition_serializer.is_valid():
+                definitions_errors.append({})
+                definitions_serializers.append(definition_serializer)
+            else:
+                definitions_errors.append(definition_serializer.errors)
+                definitions_have_errors = True
+
+        if definitions_have_errors:
+            raise serializers.ValidationError(definitions_errors)
+
+        return {
+            'serializers': definitions_serializers,
+            'deleted': TenantSpecificFieldDefinition.objects.filter(
+                table_content_type=self.instance).exclude(id__in=new_definitions_ids)
+        }
+
+    def update(self, instance, validated_data):
+        if self.validated_data.get('fields_definitions', False):
+            self.validated_data['fields_definitions']['deleted'].delete()
+            for definitions_serializer in self.validated_data['fields_definitions']['serializers']:
+                definitions_serializer.table_content_type = instance
+                definitions_serializer.save()
+
+        return instance
+
+
+class TenantSpecificTableSerializer(serializers.ModelSerializer):
+
+    fields_definitions = serializers.JSONField()
+
+    class Meta:
+        model = TenantSpecificTable
+        fields = ['name', 'fields_definitions']
+
+    def to_representation(self, obj):
+        return {
+            'name': '%s%s%s' % (
+                get_setting('CUSTOM_TABLES_LABEL'),
+                get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR'),
+                obj.name
+            ),
+            'fields_definitions': TenantSpecificFieldDefinitionCreateSerializer(
+                obj.fields_definitions, many=True).data,
+        }
+
+    def validate_name(self, name):
+        table_slug_parts = name.split(get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR'))
+        app = table_slug_parts[0]
+
+        if app != get_setting('CUSTOM_TABLES_LABEL') or len(table_slug_parts) < 2:
+            raise serializers.ValidationError(_("This is not a valid custom table name"))
+
+        return table_slug_parts[-1]
+
+    def validate_fields_definitions(self, definitions):
+        definitions_errors = []
+        definitions_serializers = []
+        definitions_have_errors = False
+        new_definitions_ids = [y['id'] for y in definitions if y.get('id', False)]
+        for definition_dict in definitions:
+            if definition_dict.get('id', False):
+                definition_serializer = TenantSpecificFieldDefinitionUpdateSerializer(
+                    TenantSpecificFieldDefinition.objects.get(id=definition_dict.get('id')),
+                    data=definition_dict, context=self.context)
+            else:
+                definition_serializer = TenantSpecificFieldDefinitionCreateSerializer(
+                    data=definition_dict, context=self.context)
+
+            if definition_serializer.is_valid():
+                definitions_errors.append({})
+                definitions_serializers.append(definition_serializer)
+            else:
+                definitions_errors.append(definition_serializer.errors)
+                definitions_have_errors = True
+
+        if definitions_have_errors:
+            raise serializers.ValidationError(definitions_errors)
+
+        return {
+            'serializers': definitions_serializers,
+            'deleted': self.instance.fields_definitions.exclude(id__in=new_definitions_ids) if self.instance else None
+        }
+
+    def create(self, validated_data):
+        table_name = validated_data.get('name')
+        table = TenantSpecificTable.objects.create(name=table_name)
+
+        if self.validated_data.get('fields_definitions', False):
+            for definitions_serializer in self.validated_data['fields_definitions']['serializers']:
+                definitions_serializer.table_id = table.id
+                definitions_serializer.table_content_type = ContentType.objects.get_for_model(TenantSpecificTable)
+                definitions_serializer.save()
+
+        return table
+
+    def update(self, instance, validated_data):
+        if validated_data.get('name', False):
+            table_name = validated_data.get('name')
+            instance.name = table_name
+            instance.save()
+
+        if self.validated_data.get('fields_definitions', False):
+            self.validated_data['fields_definitions']['deleted'].delete()
+            table_content_type = ContentType.objects.get_for_model(TenantSpecificTable)
+            for definitions_serializer in self.validated_data['fields_definitions']['serializers']:
+                definitions_serializer.table_id = instance.id
+                definitions_serializer.table_content_type = table_content_type
+                definitions_serializer.save()
 
         return instance
 
@@ -131,9 +279,9 @@ class TenantSpecificModelSerializer(serializers.ModelSerializer):
                 if validate_method is not None:
                     validated_value = validate_method(validated_value)
             except serializers.ValidationError as exc:
-                errors[field.field_name] = exc.detail
+                errors[field.name] = exc.detail
             except DjangoValidationError as exc:
-                errors[field.field_name] = get_error_detail(exc)
+                errors[field.name] = get_error_detail(exc)
             except SkipField:
                 pass
             else:
@@ -234,9 +382,9 @@ def get_tenant_specific_table_row_serializer_class(table_name):
                     if validate_method is not None:
                         validated_value = validate_method(validated_value)
                 except serializers.ValidationError as exc:
-                    errors[field.field_name] = exc.detail
+                    errors[field.name] = exc.detail
                 except DjangoValidationError as exc:
-                    errors[field.field_name] = get_error_detail(exc)
+                    errors[field.name] = get_error_detail(exc)
                 except SkipField:
                     pass
                 else:

@@ -213,28 +213,4 @@ def get_tenant_specific_table_row_form_class(table_name):
             for name, value in [(k, v) for k, v in self.cleaned_data.items() if k in tenant_specific_fields_names]:
                 setattr(self.instance, name, value)
 
-        def _clean_fields(self):
-            tenant_specific_fields_names = tenant_specific_fields_definitions.values_list('name', flat=True)
-            for name, field in self.fields.items():
-                # value_from_datadict() gets the data from the data dictionaries.
-                # Each widget type knows how to retrieve its own data, because some
-                # widgets split data over several HTML fields.
-                if name not in tenant_specific_fields_names:
-                    if field.disabled:
-                        value = self.get_initial_for_field(field, name)
-                    else:
-                        value = field.widget.value_from_datadict(self.data, self.files, self.add_prefix(name))
-                    try:
-                        if isinstance(field, FileField):
-                            initial = self.get_initial_for_field(field, name)
-                            value = field.clean(value, initial)
-                        else:
-                            value = field.clean(value)
-                        self.cleaned_data[name] = value
-                        if hasattr(self, 'clean_%s' % name):
-                            value = getattr(self, 'clean_%s' % name)()
-                            self.cleaned_data[name] = value
-                    except ValidationError as e:
-                        self.add_error(name, e)
-
     return TenantSpecificTableRowForm
