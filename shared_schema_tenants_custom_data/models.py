@@ -1,4 +1,3 @@
-import django
 from django.db import models, transaction
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -86,18 +85,14 @@ class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpe
     chunks = GenericRelation(
         TenantSpecificFieldChunk, object_id_field='row_id', content_type_field='row_content_type')
 
-    if django.utils.version.get_complete_version()[1] < 10:
-        objects = models.Manager()
-    else:
-        objects = TenantSpecificTableRowManager()
+    objects = TenantSpecificTableRowManager()
 
     original_manager = models.Manager()
     tenant_objects = TenantSpecificTableRowManager()
 
     class Meta:
-        if django.utils.version.get_complete_version()[1] >= 10:
-            default_manager_name = 'original_manager'
-            base_manager_name = 'original_manager'
+        default_manager_name = 'original_manager'
+        base_manager_name = 'original_manager'
 
     def __str__(self):
         return ', '.join(str(value) for value in self.chunks.all())
