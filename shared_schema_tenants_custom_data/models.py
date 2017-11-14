@@ -55,7 +55,7 @@ class TenantSpecificFieldDefinition(SingleTenantModelMixin):
         if content_type == 'shared_schema_tenants.TenantSpecificTable':
             content_type = str(self.table)
 
-        return '%s/%s' % (content_type, self.name)
+        return '%s.%s' % (content_type, self.name)
 
 
 class TenantSpecificFieldChunk(SingleTenantModelMixin):
@@ -70,7 +70,7 @@ class TenantSpecificFieldChunk(SingleTenantModelMixin):
 
     row_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     row_id = models.PositiveIntegerField()
-    row = GenericForeignKey('row_content_type', 'row_id')
+    row = GenericForeignKey(ct_field='row_content_type', fk_field='row_id')
 
     class Meta:
         unique_together = [('definition', 'row_id', 'row_content_type')]
@@ -83,7 +83,8 @@ class TenantSpecificFieldChunk(SingleTenantModelMixin):
 
 class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpecificFieldsModelMixin):
     table = models.ForeignKey('TenantSpecificTable', related_name='rows')
-    chunks = GenericRelation(TenantSpecificFieldChunk)
+    chunks = GenericRelation(
+        TenantSpecificFieldChunk, object_id_field='row_id', content_type_field='row_content_type')
 
     if django.utils.version.get_complete_version()[1] < 10:
         objects = models.Manager()

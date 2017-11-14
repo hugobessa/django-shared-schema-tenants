@@ -38,6 +38,28 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
                 ).update(**field_value_dict)
 
         self.view_url = reverse('shared_schema_tenants_custom_data:custom_tables_list')
+        validator_gt_2 = mommy.make(
+            'shared_schema_tenants_custom_data.TenantSpecificFieldsValidator',
+            module_path='shared_schema_tenants_custom_data.tests.validators.validator_gt_2')
+        self.params = {
+            'name': '_custom_tables__test_table_1',
+            'fields_definitions': [
+                {
+                    'name': 'test1',
+                    'data_type': 'integer',
+                    'is_required': False,
+                    'default_value': 3,
+                    'validators': [validator_gt_2.id]
+                },
+                {
+                    'name': 'test2',
+                    'data_type': 'integer',
+                    'is_required': False,
+                    'default_value': 1,
+                    'validators': []
+                }
+            ]
+        }
 
     def test_correct_number_of_tables(self):
         response = self.client.get(
@@ -139,7 +161,22 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
         self.assertEqual(response.data['count'], 11)
         self.assertEqual(len(response.data['results']), 4)
 
+    def test_create(self):
+        response = self.client.post(
+            self.view_url, self.params, format='json', HTTP_TENANT_SLUG=self.tenant.slug)
+        self.assertEqual(response.status_code, 201)
+        set_current_tenant(self.tenant.slug)
+        tables = TenantSpecificTable.objects.all()
+        self.assertEqual(tables.count(), 11)
+        new_table = tables.get(name=response.data['name'].split('__')[1])
+        self.assertEqual(new_table.fields_definitions.count(), 2)
 
+
+@override_settings(
+    SHARED_SCHEMA_TENANTS_CUSTOM_DATA={
+        'CUSTOMIZABLE_MODELS': ['lectures.Lecture']
+    }
+)
 class CustomTablesDetailsTests(SharedSchemaTenantsAPITestCase):
 
     def setUp(self):
@@ -176,36 +213,43 @@ class CustomTablesDetailsTests(SharedSchemaTenantsAPITestCase):
             'shared_schema_tenants_custom_data:custom_tables_details',
             kwargs={'slug': 'lectures__lecture'})
 
-        self.params = [
-            {
-                'name': 'test1',
-                'data_type': 'integer',
-                'is_required': False,
-                'default_value': 1,
-                'validators': []
-            },
-            {
-                'name': 'test2',
-                'data_type': 'integer',
-                'is_required': False,
-                'default_value': 1,
-                'validators': []
-            }
-        ]
+        self.validator_gt_2 = mommy.make(
+            'shared_schema_tenants_custom_data.TenantSpecificFieldsValidator',
+            module_path='shared_schema_tenants_custom_data.tests.validators.validator_gt_2')
+        self.params = {
+            'name': '_custom_tables__test_table_1',
+            'fields_definitions': [
+                {
+                    'name': 'test1',
+                    'data_type': 'integer',
+                    'is_required': False,
+                    'default_value': 1,
+                    'validators': []
+                },
+                {
+                    'name': 'test2',
+                    'data_type': 'integer',
+                    'is_required': False,
+                    'default_value': 1,
+                    'validators': [self.validator_gt_2.id]
+                }
+            ]
+        }
 
     def test_retrieves_custom_table_correctly(self):
         response = self.client.get(
             self.custom_table_view_url, HTTP_TENANT_SLUG=self.tenant.slug)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 10)
+        self.assertEqual(response.data['name'], '_custom_tables__' + self.tables[0].name)
+        self.assertEqual(len(response.data['fields_definitions']), 10)
 
     def test_retrieves_customizable_model_correctly(self):
         response = self.client.get(
             self.customizable_model_view_url, HTTP_TENANT_SLUG=self.tenant.slug)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 10)
+        self.assertEqual(len(response.data['fields_definitions']), 10)
         self.assertEqual(
             TenantSpecificFieldDefinition.original_manager.filter(
                 table_content_type=ContentType.objects.get_for_model(Lecture),
@@ -215,42 +259,42 @@ class CustomTablesDetailsTests(SharedSchemaTenantsAPITestCase):
     def test_updates_custom_table_correctly(self):
         updated_definitions = TenantSpecificFieldDefinitionCreateSerializer(
             self.tables[0].fields_definitions.first()).data
-        params = self.params + [updated_definitions]
+        params = {
+            'name': self.params['name'],
+            'fields_definitions': self.params['fields_definitions'] + [updated_definitions]
+        }
 
         response = self.client.put(
             self.custom_table_view_url, params, format='json',
             HTTP_TENANT_SLUG=self.tenant.slug)
 
+        set_current_tenant(self.tenant.slug)
+
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(
-            TenantSpecificFieldDefinition.original_manager.filter(
-                table_id=self.tables[0].id,
-                table_content_type=ContentType.objects.get_for_model(TenantSpecificTable),
-                tenant=self.tenant
-            ).count(), 2)
+        self.assertEqual(len(response.data['fields_definitions']), 3)
+        self.assertEqual(self.tables[0].fields_definitions.count(), 3)
 
     def test_updates_customizable_model_correctly(self):
         updated_definitions = TenantSpecificFieldDefinitionCreateSerializer(
             self.lecture_fields[0]).data
-        params = self.params + [updated_definitions]
+        params = {
+            'fields_definitions': self.params['fields_definitions'] + [updated_definitions]
+        }
 
         response = self.client.put(
             self.customizable_model_view_url, params, format='json',
             HTTP_TENANT_SLUG=self.tenant.slug)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['fields_definitions']), 3)
         self.assertEqual(
             TenantSpecificFieldDefinition.original_manager.filter(
                 table_content_type=ContentType.objects.get_for_model(Lecture),
                 tenant=self.tenant
-            ).count(), 2)
+            ).count(), 3)
 
     def test_destroys_custom_table_correctly(self):
-        response = self.client.put(
-            self.custom_table_view_url, format='json',
-            HTTP_TENANT_SLUG=self.tenant.slug)
+        response = self.client.delete(self.custom_table_view_url, HTTP_TENANT_SLUG=self.tenant.slug)
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(TenantSpecificTable.objects.filter(id=self.tables[0].id).exists())
@@ -323,6 +367,21 @@ class TenantSpecificTableRowViewsetTests(SharedSchemaTenantsAPITestCase):
         set_current_tenant(self.tenant.slug)
         self.assertEqual(get_custom_table_manager(self.table.name).all().count(), 2)
 
+    def test_create_invalid(self):
+        params = {}
+        for i, field in enumerate(self.fields):
+            if i == 0:
+                validator_lt_2 = mommy.make(
+                    'shared_schema_tenants_custom_data.TenantSpecificFieldsValidator',
+                    module_path='shared_schema_tenants_custom_data.tests.validators.validator_lt_2')
+                field.validators.add(validator_lt_2)
+            params[field.name] = 1 + 1000
+
+        response = self.client.post(
+            self.list_view_url, params, format='json', HTTP_TENANT_SLUG=self.tenant.slug)
+
+        self.assertEqual(response.status_code, 400)
+
     def test_retrieve(self):
         response = self.client.get(
             self.details_view_url, HTTP_TENANT_SLUG=self.tenant.slug)
@@ -349,11 +408,14 @@ class LecturesViewSetTests(SharedSchemaTenantsAPITestCase):
 
     def setUp(self):
         super(LecturesViewSetTests, self).setUp()
+        self.validator_gt_2 = mommy.make(
+            'shared_schema_tenants_custom_data.TenantSpecificFieldsValidator',
+            module_path='shared_schema_tenants_custom_data.tests.validators.validator_gt_2')
         self.lecture_fields = mommy.make(
             'shared_schema_tenants_custom_data.TenantSpecificFieldDefinition',
             table_content_type=ContentType.objects.get_for_model(Lecture),
             data_type=TenantSpecificFieldDefinition.DATA_TYPES.integer, default_value='1',
-            tenant=self.tenant, _quantity=2)
+            tenant=self.tenant, validators=[self.validator_gt_2], _quantity=2)
 
         lecture_fields_values = {
             lf.name: i + 100
@@ -405,6 +467,13 @@ class LecturesViewSetTests(SharedSchemaTenantsAPITestCase):
                 self.assertEqual(getattr(new_lecture, key), value)
             else:
                 self.assertEqual(getattr(new_lecture, key).pk, value)
+
+    def test_create_invalid(self):
+        self.params[self.lecture_fields[0].name] = -100
+        response = self.client.post(
+            self.list_view_url, self.params, format='json', HTTP_TENANT_SLUG=self.tenant.slug)
+
+        self.assertEqual(response.status_code, 400)
 
     def test_update(self):
         response = self.client.put(

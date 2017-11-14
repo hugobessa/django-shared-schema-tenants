@@ -8,3 +8,5 @@ def validate_json(value):
         value = json.loads(value)
     except Exception:
         raise ValidationError(_("This field must be a valid json"))
+
+    return value
