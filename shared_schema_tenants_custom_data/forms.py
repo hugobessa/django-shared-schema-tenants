@@ -217,7 +217,7 @@ def get_tenant_specific_table_row_form_class(table_name):
             return get_custom_table_manager(table_name).get(id=new_instance.id)
 
         def _post_clean(self):
-            super()._post_clean()
+            super(TenantSpecificModelForm, self)._post_clean()
             for name, value in [(k, v) for k, v in self.cleaned_data.items() if k in tenant_specific_fields_names]:
                 setattr(self.instance, name, value)
 
