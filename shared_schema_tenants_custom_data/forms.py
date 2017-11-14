@@ -111,7 +111,7 @@ class TenantSpecificModelForm(forms.ModelForm):
                     self.add_error(name, e)
 
     def _post_clean(self):
-        super()._post_clean()
+        super(TenantSpecificModelForm, self)._post_clean()
         for name, value in [(k, v) for k, v in self.cleaned_data.items() if k in self.tenant_specific_fields_names]:
             setattr(self.instance, name, value)
 
@@ -130,38 +130,11 @@ def get_tenant_specific_table_row_form_class(table_name):
     )
     tenant_specific_fields_names = list(tenant_specific_fields_definitions.values_list('name', flat=True))
 
-    form_tenant_specific_field_mapping = {
-        'integer': forms.IntegerField,
-        'char': forms.CharField,
-        'text': forms.CharField,
-        'float': forms.FloatField,
-        'datetime': forms.DateTimeField,
-        'date': forms.DateField,
-    }
-
-    class TenantSpecificTableRowFormMetaclass(forms.models.ModelFormMetaclass):
-
-        def __new__(mcs, name, bases, attrs):
-            for definition in tenant_specific_fields_definitions:
-                if not attrs.get(definition.name, False):
-                    field_kwargs = {}
-                    if definition.is_required:
-                        field_kwargs.update({
-                            'required': True,
-                            'allow_null': True
-                        })
-                    if definition.default_value is not None:
-                        field_kwargs.update({'initial': definition.default_value})
-
-                    attrs[definition.name] = form_tenant_specific_field_mapping[definition.data_type](
-                        **field_kwargs)
-            return super(TenantSpecificTableRowFormMetaclass, mcs).__new__(mcs, name, bases, attrs)
-
-    class TenantSpecificTableRowForm(forms.ModelForm, metaclass=TenantSpecificTableRowFormMetaclass):
+    class TenantSpecificTableRowForm(forms.ModelForm):
 
         class Meta:
             model = TenantSpecificTableRow
-            fields = ['id'] + tenant_specific_fields_names
+            fields = ['id']
 
         form_tenant_specific_field_mapping = {
             'integer': forms.IntegerField,
@@ -171,6 +144,25 @@ def get_tenant_specific_table_row_form_class(table_name):
             'datetime': forms.DateTimeField,
             'date': forms.DateField,
         }
+
+        def __init__(self, *args, **kwargs):
+            super(TenantSpecificTableRowForm, self).__init__(*args, **kwargs)
+
+            for definition in tenant_specific_fields_definitions:
+                if not self.fields.get(definition.name, False):
+                    field_kwargs = {}
+                    if definition.is_required:
+                        field_kwargs.update({
+                            'required': True,
+                            'allow_null': True
+                        })
+                    if definition.default_value is not None:
+                        field_kwargs.update(
+                            {'initial': definition.default_value})
+
+                    self.fields[definition.name] = \
+                        self.form_tenant_specific_field_mapping[definition.data_type](
+                            **field_kwargs)
 
         def full_clean(self):
             """
@@ -217,7 +209,7 @@ def get_tenant_specific_table_row_form_class(table_name):
             return get_custom_table_manager(table_name).get(id=new_instance.id)
 
         def _post_clean(self):
-            super(TenantSpecificModelForm, self)._post_clean()
+            super(TenantSpecificTableRowForm, self)._post_clean()
             for name, value in [(k, v) for k, v in self.cleaned_data.items() if k in tenant_specific_fields_names]:
                 setattr(self.instance, name, value)
 
