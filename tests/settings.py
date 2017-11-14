@@ -28,7 +28,9 @@ INSTALLED_APPS = [
     "rest_framework",
 
     "shared_schema_tenants.apps.SharedSchemaTenantsConfig",
-    "exampleproject.exampleapp",
+    "exampleproject.articles",
+    "exampleproject.lectures",
+    "shared_schema_tenants_custom_data.apps.SharedSchemaTenantsCustomDataConfig",
 ]
 
 
