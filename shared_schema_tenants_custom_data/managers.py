@@ -4,8 +4,10 @@ from django.utils.version import get_complete_version
 
 from django.contrib.contenttypes.models import ContentType
 
-from shared_schema_tenants_custom_data.querysets import TenantSpecificFieldsQueryset
 from shared_schema_tenants.managers import SingleTenantModelManager
+from shared_schema_tenants_custom_data.querysets import TenantSpecificFieldsQueryset
+from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import (
+    _get_pivot_table_class_for_data_type)
 
 
 class TenantSpecificFieldsModelBaseManager(BaseManager):
@@ -81,7 +83,7 @@ class TenantSpecificFieldsModelManager(
 
     def _get_custom_fields_annotations(self):
         from shared_schema_tenants_custom_data.models import (
-            TenantSpecificFieldDefinition, TenantSpecificFieldChunk, TenantSpecificTable, TenantSpecificTableRow)
+            TenantSpecificFieldDefinition, TenantSpecificTable, TenantSpecificTableRow)
 
         if self.model == TenantSpecificTableRow:
             definitions = TenantSpecificFieldDefinition.objects.filter(
@@ -94,31 +96,33 @@ class TenantSpecificFieldsModelManager(
 
         custom_fields_annotations = {}
 
-        for key in definitions_by_name.keys():
+        for key, definition in definitions_by_name.items():
             if get_complete_version()[1] >= 11:
                 from django.db.models import Subquery, OuterRef
                 definitions_values = (
-                    TenantSpecificFieldChunk.objects
-                    .filter(definition_id=definitions_by_name[key].id, row_id=OuterRef('pk'))
-                    .values(value=models.F('value_' + definitions_by_name[key].data_type))
+                    _get_pivot_table_class_for_data_type(definition.data_type).objects
+                    .filter(definition__id=definition.id, row_id=OuterRef('pk'))
+                    .values('value')
                 )
 
                 custom_fields_annotations[key] = Subquery(
                     queryset=definitions_values,
-                    output_field=self.data_type_fields[definitions_by_name[key].data_type]
+                    output_field=self.data_type_fields[definition.data_type]
                 )
             else:
                 from django.db.models.expressions import RawSQL
                 model_content_type = ContentType.objects.get_for_model(self.model)
                 model_table_name = (model_content_type.app_label + '_' + model_content_type.model)
+                PivotTableClass = _get_pivot_table_class_for_data_type(definition.data_type)
+                pivot_table_name = PivotTableClass._meta.db_table
                 custom_fields_annotations[key] = RawSQL(
                     """
-                        select c.value_""" + definitions_by_name[key].data_type + """
-                        from shared_schema_tenants_custom_data_tenantspecificfieldchunk c
+                        select p.value
+                        from """ + pivot_table_name + """ p
                         where definition_id = %s and
-                            c.row_id = """ + '"' + model_table_name + '"."' + self.model._meta.pk.name + '"',
-                    [definitions_by_name[key].id],
-                    output_field=self.data_type_fields[definitions_by_name[key].data_type])
+                            p.row_id = """ + '"' + model_table_name + '"."' + self.model._meta.pk.name + '"',
+                    [definition.id],
+                    output_field=self.data_type_fields[definition.data_type])
 
         return custom_fields_annotations
 

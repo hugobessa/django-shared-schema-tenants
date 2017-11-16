@@ -1,9 +1,12 @@
 from django.db import models
 from django.db import transaction
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 from shared_schema_tenants.helpers.tenants import get_current_tenant
 from shared_schema_tenants_custom_data.managers import TenantSpecificFieldsModelManager
+from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import (
+    _get_pivot_table_class_for_data_type)
 
 
 class TenantSpecificFieldsModelMixin(models.Model):
@@ -30,8 +33,6 @@ class TenantSpecificFieldsModelMixin(models.Model):
         return self.definitions
 
     def create_tenant_specific_fields(self, tenant_specific_fields_data):
-        from shared_schema_tenants_custom_data.models import TenantSpecificFieldChunk
-
         definitions = self.get_definitions()
         definitions_by_name = {d.name: d for d in definitions}
 
@@ -39,14 +40,13 @@ class TenantSpecificFieldsModelMixin(models.Model):
             for field_name, definition in definitions_by_name.items():
                 field_value = tenant_specific_fields_data.get(
                     field_name, getattr(self, field_name, None))
-                TenantSpecificFieldChunk.objects.create(
-                    definition_id=definition.id, row_id=self.id,
+                PivotTableClass = _get_pivot_table_class_for_data_type(definition.data_type)
+                PivotTableClass.objects.create(
+                    definition=definition, row_id=self.id,
                     row_content_type=ContentType.objects.get_for_model(self.__class__),
-                    **{('value_' + definition.data_type): field_value})
+                    value=field_value)
 
     def update_tenant_specific_fields(self, tenant_specific_fields_data):
-        from shared_schema_tenants_custom_data.models import TenantSpecificFieldChunk
-
         old = self.__class__.objects.get(pk=self.pk)
         definitions = self.get_definitions()
         definitions_by_name = {d.name: d for d in definitions}
@@ -55,12 +55,12 @@ class TenantSpecificFieldsModelMixin(models.Model):
             for field_name, definition in definitions_by_name.items():
                 new_value = tenant_specific_fields_data.get(field_name, None)
                 old_value = getattr(old, field_name, None)
+                PivotTableClass = _get_pivot_table_class_for_data_type(definition.data_type)
                 if new_value != old_value:
-                    TenantSpecificFieldChunk.objects.filter(
-                        definition_id=definition.id, row_id=self.id,
+                    PivotTableClass.objects.filter(
+                        definition__id=definition.id, row_id=self.id,
                         row_content_type=ContentType.objects.get_for_model(self.__class__)
-                    ).update(
-                        **{('value_' + definition.data_type): new_value})
+                    ).update(value=new_value)
 
     def save(self, *args, **kwargs):
         table_id = getattr(self, 'table_id', getattr(getattr(self, 'table', object()), 'id', None))
@@ -94,4 +94,19 @@ class TenantSpecificFieldsModelMixin(models.Model):
         return self.get_definitions()
 
     class Meta:
+        abstract = True
+
+
+class TenantSpecificPivotTable(models.Model):
+    definition = models.ForeignKey('TenantSpecificFieldDefinition')
+
+    row_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    row_id = models.PositiveIntegerField()
+    row = GenericForeignKey(ct_field='row_content_type', fk_field='row_id')
+
+    def __str__(self):
+        return '%s: %s' % (str(self.definition), self.value)
+
+    class Meta:
+        unique_together = [('definition', 'row_id', 'row_content_type')]
         abstract = True

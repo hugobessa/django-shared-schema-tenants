@@ -52,8 +52,8 @@ class TenantSpecificFieldsQueryset(QuerySet):
         return self.definitions
 
     def update(self, *args, **kwargs):
-        from shared_schema_tenants_custom_data.models import TenantSpecificFieldChunk
-
+        from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import (
+            _get_pivot_table_class_for_data_type)
         definitions = self.get_definitions()
         definitions_by_name = {d.name: d for d in definitions}
 
@@ -63,6 +63,7 @@ class TenantSpecificFieldsQueryset(QuerySet):
         super(TenantSpecificFieldsQueryset, self).update(**common_fields)
 
         for field_name, field_value in custom_fields.items():
-            (TenantSpecificFieldChunk.objects
-             .filter(definition_id=definitions_by_name[field_name].id)
-             .update(**{('value_' + definitions_by_name[field_name].data_type): field_value}))
+            PivotTableClass = _get_pivot_table_class_for_data_type(definitions_by_name[field_name].data_type)
+            (PivotTableClass.objects
+             .filter(definition__id=definitions_by_name[field_name].id)
+             .update(value=field_value))
