@@ -28,22 +28,6 @@ class TenantSpecificTable(SingleTenantModelMixin):
             table_id=self.id)
 
 
-class TenantSpecificTablePermission(SingleTenantModelMixin):
-    table = models.ForeignKey('TenantSpecificTable')
-    name = models.CharField(max_length=255)
-    codename = models.CharField(max_length=100)
-
-
-class TenantSpecificTableGroup(SingleTenantModelMixin):
-    group = models.ForeignKey('TenantSpecificTable')
-    permissions = models.ManyToManyField('TenantSpecificTablePermission')
-
-
-class TenantSpecificTableRelationshionship(SingleTenantModelMixin):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL)
-    permissions = models.ManyToManyField('TenantSpecificTablePermission')
-
-
 class TenantSpecificFieldsValidator(MultipleTenantsModelMixin):
     module_path = models.CharField(max_length=255)
     tenants = models.ManyToManyField('shared_schema_tenants.Tenant', related_name='validators_available')
