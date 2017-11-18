@@ -1,7 +1,5 @@
 from django.db import models, transaction
-from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.conf import settings
 
 from model_utils.models import TimeStampedModel
 from model_utils.choices import Choices
