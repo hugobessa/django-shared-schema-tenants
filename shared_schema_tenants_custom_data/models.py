@@ -1,6 +1,6 @@
 from django.db import models, transaction
-from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group
 from django.conf import settings
 
 from model_utils.models import TimeStampedModel
@@ -28,20 +28,26 @@ class TenantSpecificTable(SingleTenantModelMixin):
             table_id=self.id)
 
 
-class TenantSpecificTablePermission(SingleTenantModelMixin):
-    table = models.ForeignKey('TenantSpecificTable')
+class TenantSpecificTablesPermission(SingleTenantModelMixin):
     name = models.CharField(max_length=255)
+    table = models.ForeignKey('TenantSpecificTable')
     codename = models.CharField(max_length=100)
 
 
-class TenantSpecificTableGroup(SingleTenantModelMixin):
-    group = models.ForeignKey('TenantSpecificTable')
-    permissions = models.ManyToManyField('TenantSpecificTablePermission')
+class TenantSpecificTablesGroup(SingleTenantModelMixin):
+    name = models.CharField(max_length=255)
+    group = models.OneToOneField(
+        Group, related_name='tenant_specific_table_group')
+    permissions = models.ManyToManyField(
+        'TenantSpecificTablesPermission', blank=True)
 
 
-class TenantSpecificTableRelationshionship(SingleTenantModelMixin):
+class TenantSpecificTablesRelationship(SingleTenantModelMixin):
     user = models.ForeignKey(settings.AUTH_USER_MODEL)
-    permissions = models.ManyToManyField('TenantSpecificTablePermission')
+    groups = models.ManyToManyField(
+        'TenantSpecificTablesGroup', related_name='relationships')
+    permissions = models.ManyToManyField(
+        'TenantSpecificTablesPermission', related_name='relationships')
 
 
 class TenantSpecificFieldsValidator(MultipleTenantsModelMixin):
