@@ -8,10 +8,11 @@ from tests.utils import SharedSchemaTenantsAPITestCase
 from exampleproject.lectures.models import Lecture
 from shared_schema_tenants.helpers.tenants import set_current_tenant
 from shared_schema_tenants_custom_data.models import (
-    TenantSpecificTable, TenantSpecificFieldDefinition, TenantSpecificFieldChunk)
+    TenantSpecificTable, TenantSpecificFieldDefinition)
 from shared_schema_tenants_custom_data.serializers import (
     TenantSpecificFieldDefinitionCreateSerializer)
-from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import get_custom_table_manager
+from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import (
+    get_custom_table_manager, _get_pivot_table_class_for_data_type)
 
 
 class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
@@ -32,10 +33,10 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
                 'shared_schema_tenants_custom_data.TenantSpecificTableRow', table=table, tenant=self.tenant)
 
             for i, field in enumerate(self.fields):
-                field_value_dict = {'value_' + field.data_type: i + 5}
-                TenantSpecificFieldChunk.objects.filter(
+                PivotTableClass = _get_pivot_table_class_for_data_type(field.data_type)
+                PivotTableClass.objects.filter(
                     row_id=self.row.id, definition=field
-                ).update(**field_value_dict)
+                ).update(value=i + 5)
 
         self.view_url = reverse('shared_schema_tenants_custom_data:custom_tables_list')
         validator_gt_2 = mommy.make(
@@ -195,10 +196,11 @@ class CustomTablesDetailsTests(SharedSchemaTenantsAPITestCase):
                 'shared_schema_tenants_custom_data.TenantSpecificTableRow', table=table, tenant=self.tenant)
 
             for i, field in enumerate(fields):
-                field_value_dict = {'value_' + field.data_type: i + 5}
-                TenantSpecificFieldChunk.objects.filter(
+                PivotTableClass = _get_pivot_table_class_for_data_type(
+                    field.data_type)
+                PivotTableClass.objects.filter(
                     row_id=self.row.id, definition=field
-                ).update(**field_value_dict)
+                ).update(value=i + 5)
 
         self.lecture_fields = mommy.make(
             'shared_schema_tenants_custom_data.TenantSpecificFieldDefinition',
@@ -333,8 +335,8 @@ class TenantSpecificTableRowViewsetTests(SharedSchemaTenantsAPITestCase):
             'shared_schema_tenants_custom_data.TenantSpecificTableRow', table=self.table, tenant=self.tenant)
 
         for i, field in enumerate(self.fields):
-            field_value_dict = {'value_' + field.data_type: i + 5}
-            TenantSpecificFieldChunk.objects.filter(row_id=self.row.id, definition=field).update(**field_value_dict)
+            PivotTableClass = _get_pivot_table_class_for_data_type(field.data_type)
+            PivotTableClass.objects.filter(row_id=self.row.id, definition=field).update(value=i + 5)
 
         self.list_view_url = reverse(
             'shared_schema_tenants_custom_data:custom_data_list',

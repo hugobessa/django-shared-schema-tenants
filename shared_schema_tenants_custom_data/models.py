@@ -1,5 +1,4 @@
 from django.db import models, transaction
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
 from model_utils.models import TimeStampedModel
@@ -7,7 +6,7 @@ from model_utils.choices import Choices
 from model_utils.fields import StatusField
 
 from shared_schema_tenants.mixins import SingleTenantModelMixin, MultipleTenantsModelMixin
-from shared_schema_tenants_custom_data.mixins import TenantSpecificFieldsModelMixin
+from shared_schema_tenants_custom_data.mixins import TenantSpecificFieldsModelMixin, TenantSpecificPivotTable
 from shared_schema_tenants_custom_data.managers import TenantSpecificTableRowManager
 
 
@@ -57,33 +56,44 @@ class TenantSpecificFieldDefinition(SingleTenantModelMixin):
         return '%s.%s' % (content_type, self.name)
 
 
-class TenantSpecificFieldChunk(SingleTenantModelMixin):
-    value_integer = models.IntegerField(blank=True, null=True)
-    value_char = models.CharField(max_length=255, blank=True, null=True)
-    value_text = models.TextField(blank=True, null=True)
-    value_float = models.FloatField(blank=True, null=True)
-    value_datetime = models.DateTimeField(blank=True, null=True)
-    value_date = models.DateField(blank=True, null=True)
-
-    definition = models.ForeignKey('TenantSpecificFieldDefinition', related_name='chunks')
-
-    row_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    row_id = models.PositiveIntegerField()
-    row = GenericForeignKey(ct_field='row_content_type', fk_field='row_id')
-
-    class Meta:
-        unique_together = [('definition', 'row_id', 'row_content_type')]
+class TenantSpecificFieldIntegerPivot(SingleTenantModelMixin, TenantSpecificPivotTable):
+    value = models.IntegerField()
 
     def __str__(self):
-        return '%s: %s' % (
-            str(self.definition), str(getattr(self, 'value_' + self.definition.data_type))
-        )
+        return '%s: %d' % (str(self.definition), self.value)
+
+
+class TenantSpecificFieldCharPivot(SingleTenantModelMixin, TenantSpecificPivotTable):
+    value = models.CharField(max_length=255)
+
+
+class TenantSpecificFieldTextPivot(SingleTenantModelMixin, TenantSpecificPivotTable):
+    value = models.TextField()
+
+
+class TenantSpecificFieldFloatPivot(SingleTenantModelMixin, TenantSpecificPivotTable):
+    value = models.FloatField()
+
+    def __str__(self):
+        return '%s: %f' % (str(self.definition), self.value)
+
+
+class TenantSpecificFieldDatePivot(SingleTenantModelMixin, TenantSpecificPivotTable):
+    value = models.DateField()
+
+    def __str__(self):
+        return '%s: %s' % (str(self.definition), self.value.isoformat())
+
+
+class TenantSpecificFieldDateTimePivot(SingleTenantModelMixin, TenantSpecificPivotTable):
+    value = models.DateTimeField()
+
+    def __str__(self):
+        return '%s: %s' % (str(self.definition), self.value.isoformat())
 
 
 class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpecificFieldsModelMixin):
     table = models.ForeignKey('TenantSpecificTable', related_name='rows')
-    chunks = GenericRelation(
-        TenantSpecificFieldChunk, object_id_field='row_id', content_type_field='row_content_type')
 
     objects = TenantSpecificTableRowManager()
 
@@ -95,15 +105,43 @@ class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpe
         base_manager_name = 'original_manager'
 
     def __str__(self):
-        return ', '.join(str(value) for value in self.chunks.all())
+        return ', '.join(str(p) for p in self.pivots)
 
     @property
     def fields_definitions(self):
         return self.table.fields_definitions
 
+    @property
+    def values_dict(self):
+        from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import (
+            _get_pivot_table_class_for_data_type)
+        definitions = self.table.fields_definitions
+        row_content_type = ContentType.objects.get_for_model(self.__class__)
+        values = {
+            d.name: _get_pivot_table_class_for_data_type(d.data_type).objects.get(
+                row_id=self.id, row_content_type=row_content_type).value
+            for d in definitions
+        }
+
+        return values
+
+    @property
+    def pivots(self):
+        from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import (
+            _get_pivot_table_class_for_data_type)
+        definitions = self.table.fields_definitions
+        row_content_type = ContentType.objects.get_for_model(self.__class__)
+        values_list = {
+            d.name: _get_pivot_table_class_for_data_type(d.data_type).objects.get(
+                row_id=self.id, row_content_type=row_content_type)
+            for d in definitions
+        }
+
+        return values_list
+
     def update_tenant_specific_fields(self, tenant_specific_fields_data):
-        from shared_schema_tenants_custom_data.models import TenantSpecificFieldChunk
-        from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import get_custom_table_manager
+        from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import (
+            get_custom_table_manager, _get_pivot_table_class_for_data_type)
 
         old = get_custom_table_manager(self.table.name).get(pk=self.pk)
         definitions = self.get_definitions()
@@ -115,7 +153,8 @@ class TenantSpecificTableRow(TimeStampedModel, SingleTenantModelMixin, TenantSpe
                     field_name, None)
                 old_value = getattr(old, field_name, None)
                 if new_value != old_value:
-                    TenantSpecificFieldChunk.objects.filter(
-                        definition_id=definition.id, row_id=self.id,
+                    PivotTableClass = _get_pivot_table_class_for_data_type(definition.data_type)
+                    PivotTableClass.objects.filter(
+                        definition__id=definition.id, row_id=self.id,
                         row_content_type=ContentType.objects.get_for_model(self.__class__)
-                    ).update(**{('value_' + definition.data_type): new_value})
+                    ).update(value=new_value)

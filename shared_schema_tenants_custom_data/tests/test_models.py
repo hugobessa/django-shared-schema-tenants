@@ -4,8 +4,9 @@ from django.contrib.contenttypes.models import ContentType
 
 from tests.utils import SharedSchemaTenantsTestCase
 from shared_schema_tenants_custom_data.models import (
-    TenantSpecificTable, TenantSpecificFieldDefinition, TenantSpecificFieldChunk)
-from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import get_custom_table_manager
+    TenantSpecificTable, TenantSpecificFieldDefinition)
+from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import (
+    get_custom_table_manager, _get_pivot_table_class_for_data_type)
 
 
 class TenantSpecificTableTests(SharedSchemaTenantsTestCase):
@@ -23,8 +24,8 @@ class TenantSpecificTableTests(SharedSchemaTenantsTestCase):
             'shared_schema_tenants_custom_data.TenantSpecificTableRow', table=self.table, tenant=self.tenant)
 
         for i, field in enumerate(self.fields):
-            field_value_dict = {'value_' + field.data_type: i + 5}
-            TenantSpecificFieldChunk.objects.filter(row_id=self.row.id, definition=field).update(**field_value_dict)
+            PivotTableClass = _get_pivot_table_class_for_data_type(field.data_type)
+            PivotTableClass.objects.filter(row_id=self.row.id, definition=field).update(value=i + 5)
 
     def test_can_filter_by_tenant_specific_fields(self):
         row = get_custom_table_manager(self.table.name).all().first()
