@@ -1,3 +1,4 @@
+import sys
 from shared_schema_tenants.auth_backends import TenantModelBackend
 from shared_schema_tenants.helpers.tenants import get_current_tenant
 from shared_schema_tenants_custom_data.models import (
@@ -76,7 +77,12 @@ class TenantSpecificTablesBackend(TenantModelBackend):
         return user_obj._tenant_specific_tables_perm_cache[tenant.pk]
 
     def has_perm(self, user_obj, perm, obj=None):
-        if type(perm) in [str, unicode]:
+        custom_table_perm_types = [str]
+
+        if sys.version_info < (3,0,0):
+            custom_table_perm_types = [str, unicode]
+
+        if type(perm) in custom_table_perm_types:
             return perm in self.get_all_tenant_specific_table_permissions(user_obj, obj)
 
         if not user_obj.is_active:
