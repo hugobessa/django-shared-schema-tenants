@@ -73,10 +73,12 @@ class TenantSpecificTablesBackend(TenantModelBackend):
                     self.get_group_tenant_specific_tables_permissions(user_obj, obj))
             )
 
+        import ipdb ; ipdb.set_trace()
+
         return user_obj._tenant_specific_tables_perm_cache[tenant.pk]
 
     def has_perm(self, user_obj, perm, obj=None):
-        if type(perm) == str:
+        if type(perm) in [str, unicode]:
             return perm in self.get_all_tenant_specific_table_permissions(user_obj, obj)
 
         if not user_obj.is_active:
