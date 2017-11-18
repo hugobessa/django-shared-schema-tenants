@@ -12,6 +12,7 @@ class SharedSchemaTenantsTestCase(TestCase):
 
     def setUp(self):
         self.tenant = mommy.make('shared_schema_tenants.Tenant')
+        set_current_tenant(self.tenant.slug)
         self.user = User.objects.create_user(
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',
@@ -20,14 +21,13 @@ class SharedSchemaTenantsTestCase(TestCase):
                                                 groups=create_default_tenant_groups())
         self.tenant_site = mommy.make('shared_schema_tenants.TenantSite',
                                       tenant=self.tenant)
-
-        set_current_tenant(self.tenant.slug)
 
 
 class SharedSchemaTenantsAPITestCase(APITestCase):
 
     def setUp(self):
         self.tenant = mommy.make('shared_schema_tenants.Tenant')
+        set_current_tenant(self.tenant.slug)
         self.user = User.objects.create_user(
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',
@@ -37,4 +37,3 @@ class SharedSchemaTenantsAPITestCase(APITestCase):
         self.tenant_site = mommy.make('shared_schema_tenants.TenantSite',
                                       tenant=self.tenant)
 
-        set_current_tenant(self.tenant.slug)

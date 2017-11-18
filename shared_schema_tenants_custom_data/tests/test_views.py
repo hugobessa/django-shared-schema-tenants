@@ -37,6 +37,7 @@ class CustomTablesListTests(SharedSchemaTenantsAPITestCase):
                 PivotTableClass.objects.filter(
                     row_id=self.row.id, definition=field
                 ).update(value=i + 5)
+        self.client.force_authenticate(self.user)
 
         self.view_url = reverse('shared_schema_tenants_custom_data:custom_tables_list')
         validator_gt_2 = mommy.make(
@@ -215,6 +216,8 @@ class CustomTablesDetailsTests(SharedSchemaTenantsAPITestCase):
             'shared_schema_tenants_custom_data:custom_tables_details',
             kwargs={'slug': 'lectures__lecture'})
 
+        self.client.force_authenticate(self.user)
+
         self.validator_gt_2 = mommy.make(
             'shared_schema_tenants_custom_data.TenantSpecificFieldsValidator',
             module_path='shared_schema_tenants_custom_data.tests.validators.validator_gt_2')
@@ -338,6 +341,8 @@ class TenantSpecificTableRowViewsetTests(SharedSchemaTenantsAPITestCase):
             PivotTableClass = _get_pivot_table_class_for_data_type(field.data_type)
             PivotTableClass.objects.filter(row_id=self.row.id, definition=field).update(value=i + 5)
 
+        self.client.force_authenticate(self.user)
+
         self.list_view_url = reverse(
             'shared_schema_tenants_custom_data:custom_data_list',
             kwargs={
@@ -429,7 +434,7 @@ class LecturesViewSetTests(SharedSchemaTenantsAPITestCase):
         self.details_view_url = reverse(
             'lectures:details', kwargs={'pk': self.lecture.pk})
 
-        self.client.force_login(self.user)
+        self.client.force_authenticate(self.user)
 
         self.params = {
             'subject': "Test",

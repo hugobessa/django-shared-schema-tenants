@@ -4,14 +4,14 @@ from shared_schema_tenants_custom_data.models import (
     TenantSpecificTablesPermission, TenantSpecificTablesRelationship)
 
 
-class TenantSpecificTableBackend(TenantModelBackend):
+class TenantSpecificTablesBackend(TenantModelBackend):
 
     def _get_user_tenant_specific_tables_permissions(self, relationship):
         return relationship.permissions.all()
 
     def _get_group_tenant_specific_tables_permissions(self, relationship):
         relationship_groups_field = TenantSpecificTablesRelationship._meta.get_field('groups')
-        relationship_groups_query = 'group__%s' % relationship_groups_field.related_query_name()
+        relationship_groups_query = 'groups__%s' % relationship_groups_field.related_query_name()
         return TenantSpecificTablesPermission.objects.filter(**{relationship_groups_query: relationship})
 
     def _get_tenant_specific_tables_permissions(self, user_obj, obj, from_name):
@@ -40,9 +40,9 @@ class TenantSpecificTableBackend(TenantModelBackend):
                                                  from_name)(relationship)
                     relationship_perms = relationship_perms.values_list('codename', flat=True).order_by()
             setattr(user_obj, perm_cache_name, {
-                tenant.pk: [
+                tenant.pk: {
                     name for name in relationship_perms
-                ]
+                }
             })
         return getattr(user_obj, perm_cache_name).get(tenant.pk)
 
@@ -68,13 +68,15 @@ class TenantSpecificTableBackend(TenantModelBackend):
             user_obj._tenant_specific_tables_perm_cache = {
                 tenant.pk: self.get_user_tenant_specific_tables_permissions(user_obj, obj)}
 
-            user_obj._tenant_specific_tables_perm_cache[tenant.pk].update(
-                self.get_group_tenant_specific_tables_permissions(user_obj, obj))
+            user_obj._tenant_specific_tables_perm_cache[tenant.pk] = (
+                user_obj._tenant_specific_tables_perm_cache[tenant.pk].union(
+                    self.get_group_tenant_specific_tables_permissions(user_obj, obj))
+            )
 
-        return user_obj._tenant_perm_cache[tenant.pk]
+        return user_obj._tenant_specific_tables_perm_cache[tenant.pk]
 
     def has_perm(self, user_obj, perm, obj=None):
-        if type(perm).__name__ == 'TenantSpecificTablesPermission':
+        if type(perm) == str:
             return perm in self.get_all_tenant_specific_table_permissions(user_obj, obj)
 
         if not user_obj.is_active:

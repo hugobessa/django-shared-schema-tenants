@@ -30,7 +30,7 @@ class DjangoTenantSpecificTablePermissions(DjangoModelPermissions):
         if method not in self.perms_map:
             raise exceptions.MethodNotAllowed(method)
 
-        return [perm % kwargs for perm in self.perms_map[method]]
+        return [perm % kwargs for perm in self.tenant_specific_tables_perms_map[method]]
 
     def _queryset(self, view):
         assert hasattr(view, 'get_queryset') \

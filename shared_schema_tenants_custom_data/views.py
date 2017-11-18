@@ -1,21 +1,27 @@
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
-from django.db import transaction
 from rest_framework import status, generics, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from shared_schema_tenants.utils import import_item
+from shared_schema_tenants_custom_data.permissions import DjangoTenantSpecificTablePermissions
 from shared_schema_tenants_custom_data.settings import get_setting
 from shared_schema_tenants_custom_data.models import (
     TenantSpecificTable, TenantSpecificFieldDefinition)
 from shared_schema_tenants_custom_data.serializers import (
-    TenantSpecificFieldDefinitionCreateSerializer, TenantSpecificFieldDefinitionUpdateSerializer,
     get_tenant_specific_table_row_serializer_class, TenantSpecificTableSerializer,
     TenantSpecificFieldsModelDefinitionsUpdateSerializer)
 from shared_schema_tenants_custom_data.helpers.custom_tables_helpers import get_custom_table_manager
 
 
 class CustomizableModelsList(APIView):
+
+    def get_permissions(self):
+        return [
+            import_item(permission)()
+            for permission in get_setting('CUSTOMIZABLE_MODELS_LIST_CREATE_PERMISSIONS')
+        ]
 
     def get_queryset(self):
         custom_tables = TenantSpecificTable.objects.all()
@@ -103,6 +109,12 @@ class CustomizableModelsList(APIView):
 
 class CustomTableDetails(generics.RetrieveUpdateDestroyAPIView):
 
+    def get_permissions(self):
+        return [
+            import_item(permission)()
+            for permission in get_setting('CUSTOMIZABLE_MODELS_RETRIEVE_UTPADE_DESTROY_PERMISSIONS')
+        ]
+
     def get_queryset(self):
         table_slug = self.kwargs['slug']
         table_slug_parts = table_slug.split(get_setting('CUSTOMIZABLE_TABLES_LABEL_SEPARATOR'))
@@ -157,6 +169,7 @@ class CustomTableDetails(generics.RetrieveUpdateDestroyAPIView):
 
 
 class TenantSpecificTableRowViewset(viewsets.ModelViewSet):
+    permission_classes = [DjangoTenantSpecificTablePermissions]
 
     def get_queryset(self):
         table_slug = self.kwargs['slug']

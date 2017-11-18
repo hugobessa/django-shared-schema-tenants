@@ -12,6 +12,7 @@ class TenantModelBackendTests(TestCase):
 
     def setUp(self):
         self.tenant = Tenant.objects.create(name='test', slug='test')
+        set_current_tenant(self.tenant.slug)
         self.user = User.objects.create_user(
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',

@@ -44,4 +44,4 @@ class DjangoTenantModelPermissionsTests(SharedSchemaTenantsTestCase):
 
     def test_has_object_permission_without_tenant_attributes(self):
         obj = mock.Mock(spec=['test_not_tenant_attribute'])
-        self.assertFalse(self.permission.has_object_permission(self.request, None, obj))
+        self.assertTrue(self.permission.has_object_permission(self.request, None, obj))

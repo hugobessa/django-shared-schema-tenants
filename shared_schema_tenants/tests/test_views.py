@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from django.test import RequestFactory
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth.models import User
@@ -9,9 +8,6 @@ from model_mommy import mommy
 from shared_schema_tenants.models import Tenant, TenantSite
 from shared_schema_tenants.helpers.tenants import set_current_tenant, create_default_tenant_groups
 from shared_schema_tenants.helpers.tenant_relationships import create_relationship
-from shared_schema_tenants.views import (
-    TenantListView, TenantDetailsView, TenantSettingsDetailsView,
-    TenantSiteListView, TenantSiteDetailsView)
 
 
 try:
@@ -24,6 +20,7 @@ class TenantListViewTests(APITestCase):
 
     def setUp(self):
         self.tenants = mommy.make('shared_schema_tenants.Tenant', _quantity=10)
+        set_current_tenant(self.tenants[0].slug)
         self.user = User.objects.create_user(
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',
@@ -65,6 +62,7 @@ class TenantDetailsViewTests(APITestCase):
 
     def setUp(self):
         self.tenants = mommy.make('shared_schema_tenants.Tenant', _quantity=10)
+        set_current_tenant(self.tenants[0].slug)
         self.user = User.objects.create_user(
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',
@@ -106,6 +104,7 @@ class TenantSiteListViewTests(APITestCase):
 
     def setUp(self):
         self.tenant = mommy.make('shared_schema_tenants.Tenant')
+        set_current_tenant(self.tenant.slug)
         self.user = User.objects.create_user(
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',
@@ -141,6 +140,7 @@ class TenantSiteDetailsViewTests(APITestCase):
 
     def setUp(self):
         self.tenant = mommy.make('shared_schema_tenants.Tenant')
+        set_current_tenant(self.tenant.slug)
         self.user = User.objects.create_user(
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',
@@ -169,6 +169,7 @@ class TenantSettingsDetailsViewTests(APITestCase):
 
     def setUp(self):
         self.tenant = mommy.make('shared_schema_tenants.Tenant')
+        set_current_tenant(self.tenant.slug)
         self.user = User.objects.create_user(
             first_name='test', last_name='test',
             username='test', email='test@sharedschematenants.com',
