@@ -173,56 +173,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='TenantSpecificTableGroup',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('group', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants_custom_data.TenantSpecificTable')),
-            ],
-            options={
-                'abstract': False,
-                'base_manager_name': 'original_manager',
-                'default_manager_name': 'original_manager',
-            },
-            managers=[
-                ('original_manager', django.db.models.manager.Manager()),
-            ],
-        ),
-        migrations.CreateModel(
-            name='TenantSpecificTablePermission',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('codename', models.CharField(max_length=100)),
-                ('table', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants_custom_data.TenantSpecificTable')),
-                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
-            ],
-            options={
-                'abstract': False,
-                'base_manager_name': 'original_manager',
-                'default_manager_name': 'original_manager',
-            },
-            managers=[
-                ('original_manager', django.db.models.manager.Manager()),
-            ],
-        ),
-        migrations.CreateModel(
-            name='TenantSpecificTableRelationshionship',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('permissions', models.ManyToManyField(to='shared_schema_tenants_custom_data.TenantSpecificTablePermission')),
-                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-            ],
-            options={
-                'abstract': False,
-                'base_manager_name': 'original_manager',
-                'default_manager_name': 'original_manager',
-            },
-            managers=[
-                ('original_manager', django.db.models.manager.Manager()),
-            ],
-        ),
-        migrations.CreateModel(
             name='TenantSpecificTableRow',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -238,16 +188,6 @@ class Migration(migrations.Migration):
             managers=[
                 ('original_manager', django.db.models.manager.Manager()),
             ],
-        ),
-        migrations.AddField(
-            model_name='tenantspecifictablegroup',
-            name='permissions',
-            field=models.ManyToManyField(to='shared_schema_tenants_custom_data.TenantSpecificTablePermission'),
-        ),
-        migrations.AddField(
-            model_name='tenantspecifictablegroup',
-            name='tenant',
-            field=models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant'),
         ),
         migrations.AddField(
             model_name='tenantspecificfielddefinition',
