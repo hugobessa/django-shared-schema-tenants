@@ -25,7 +25,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TenantSpecificFieldCharPivot',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('row_id', models.PositiveIntegerField()),
                 ('value', models.CharField(max_length=255)),
             ],
@@ -41,7 +42,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TenantSpecificFieldDatePivot',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('row_id', models.PositiveIntegerField()),
                 ('value', models.DateField()),
             ],
@@ -57,7 +59,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TenantSpecificFieldDateTimePivot',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('row_id', models.PositiveIntegerField()),
                 ('value', models.DateTimeField()),
             ],
@@ -73,14 +76,18 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TenantSpecificFieldDefinition',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=255)),
-                ('data_type', model_utils.fields.StatusField(choices=[('char', 'char'), ('text', 'text'), ('integer', 'integer'), ('float', 'float'), ('datetime', 'datetime'), ('date', 'date')], default='char', max_length=100, no_check_for_status=True)),
+                ('data_type', model_utils.fields.StatusField(choices=[('char', 'char'), ('text', 'text'), ('integer', 'integer'), (
+                    'float', 'float'), ('datetime', 'datetime'), ('date', 'date')], default='char', max_length=100, no_check_for_status=True)),
                 ('is_required', models.BooleanField(default=False)),
                 ('default_value', models.TextField()),
                 ('table_id', models.PositiveIntegerField(blank=True, null=True)),
-                ('table_content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
-                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
+                ('table_content_type', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
+                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant,
+                                             on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
             ],
             managers=[
                 ('objects', django.db.models.manager.Manager()),
@@ -90,12 +97,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TenantSpecificFieldFloatPivot',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('row_id', models.PositiveIntegerField()),
                 ('value', models.FloatField()),
-                ('definition', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition')),
-                ('row_content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
-                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
+                ('definition', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                                 to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition')),
+                ('row_content_type', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
+                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant,
+                                             on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
             ],
             options={
                 'abstract': False,
@@ -109,12 +120,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TenantSpecificFieldIntegerPivot',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('row_id', models.PositiveIntegerField()),
                 ('value', models.IntegerField()),
-                ('definition', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition')),
-                ('row_content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
-                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
+                ('definition', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                                 to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition')),
+                ('row_content_type', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
+                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant,
+                                             on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
             ],
             options={
                 'abstract': False,
@@ -128,9 +143,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TenantSpecificFieldsValidator',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('module_path', models.CharField(max_length=255)),
-                ('tenants', models.ManyToManyField(related_name='validators_available', to='shared_schema_tenants.Tenant')),
+                ('tenants', models.ManyToManyField(
+                    related_name='validators_available', to='shared_schema_tenants.Tenant')),
             ],
             options={
                 'abstract': False,
@@ -144,12 +161,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TenantSpecificFieldTextPivot',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('row_id', models.PositiveIntegerField()),
                 ('value', models.TextField()),
-                ('definition', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition')),
-                ('row_content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
-                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
+                ('definition', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                                 to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition')),
+                ('row_content_type', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
+                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant,
+                                             on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
             ],
             options={
                 'abstract': False,
@@ -163,9 +184,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TenantSpecificTable',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=255)),
-                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
+                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant,
+                                             on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
             ],
             managers=[
                 ('objects', django.db.models.manager.Manager()),
@@ -175,11 +198,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TenantSpecificTableRow',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('table', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='rows', to='shared_schema_tenants_custom_data.TenantSpecificTable')),
-                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
+                ('created', model_utils.fields.AutoCreatedField(
+                    default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(
+                    default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('table', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                            related_name='rows', to='shared_schema_tenants_custom_data.TenantSpecificTable')),
+                ('tenant', models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant,
+                                             on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant')),
             ],
             options={
                 'base_manager_name': 'original_manager',
@@ -192,52 +220,62 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tenantspecificfielddefinition',
             name='validators',
-            field=models.ManyToManyField(blank=True, to='shared_schema_tenants_custom_data.TenantSpecificFieldsValidator'),
+            field=models.ManyToManyField(
+                blank=True, to='shared_schema_tenants_custom_data.TenantSpecificFieldsValidator'),
         ),
         migrations.AddField(
             model_name='tenantspecificfielddatetimepivot',
             name='definition',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition'),
         ),
         migrations.AddField(
             model_name='tenantspecificfielddatetimepivot',
             name='row_content_type',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType'),
         ),
         migrations.AddField(
             model_name='tenantspecificfielddatetimepivot',
             name='tenant',
-            field=models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant'),
+            field=models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant,
+                                    on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant'),
         ),
         migrations.AddField(
             model_name='tenantspecificfielddatepivot',
             name='definition',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition'),
         ),
         migrations.AddField(
             model_name='tenantspecificfielddatepivot',
             name='row_content_type',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType'),
         ),
         migrations.AddField(
             model_name='tenantspecificfielddatepivot',
             name='tenant',
-            field=models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant'),
+            field=models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant,
+                                    on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant'),
         ),
         migrations.AddField(
             model_name='tenantspecificfieldcharpivot',
             name='definition',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    to='shared_schema_tenants_custom_data.TenantSpecificFieldDefinition'),
         ),
         migrations.AddField(
             model_name='tenantspecificfieldcharpivot',
             name='row_content_type',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType'),
         ),
         migrations.AddField(
             model_name='tenantspecificfieldcharpivot',
             name='tenant',
-            field=models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant, on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant'),
+            field=models.ForeignKey(default=shared_schema_tenants.mixins.get_default_tenant,
+                                    on_delete=django.db.models.deletion.CASCADE, to='shared_schema_tenants.Tenant'),
         ),
         migrations.AlterUniqueTogether(
             name='tenantspecifictable',
@@ -245,6 +283,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='tenantspecificfielddefinition',
-            unique_together=set([('tenant', 'table_id', 'table_content_type', 'name')]),
+            unique_together=set(
+                [('tenant', 'table_id', 'table_content_type', 'name')]),
         ),
     ]

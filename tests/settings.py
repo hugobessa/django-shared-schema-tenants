@@ -87,5 +87,6 @@ REST_FRAMEWORK = {
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'shared_schema_tenants.auth_backends.TenantModelBackend'
+    'shared_schema_tenants.auth_backends.TenantModelBackend',
+    'shared_schema_tenants_custom_data.auth_backends.TenantSpecificTablesBackend',
 ]

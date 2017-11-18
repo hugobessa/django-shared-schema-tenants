@@ -1,11 +1,16 @@
 from django.db import models, transaction
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group
+from django.conf import settings
+from django.dispatch import receiver
+from django.db.models.signals import post_save, m2m_changed
 
 from model_utils.models import TimeStampedModel
 from model_utils.choices import Choices
 from model_utils.fields import StatusField
 
 from shared_schema_tenants.mixins import SingleTenantModelMixin, MultipleTenantsModelMixin
+from shared_schema_tenants.models import TenantRelationship
 from shared_schema_tenants_custom_data.mixins import TenantSpecificFieldsModelMixin, TenantSpecificPivotTable
 from shared_schema_tenants_custom_data.managers import TenantSpecificTableRowManager
 
@@ -24,6 +29,70 @@ class TenantSpecificTable(SingleTenantModelMixin):
         return TenantSpecificFieldDefinition.objects.filter(
             table_content_type=ContentType.objects.get_for_model(TenantSpecificTable),
             table_id=self.id)
+
+    def save(self, *args, **kwargs):
+        super(TenantSpecificTable, self).save(*args, **kwargs)
+        tstgroup = TenantSpecificTablesGroup.objects.get(group__name='tenant_owner')
+        tstgroup.permissions.add(TenantSpecificTablesPermission.objects.create(
+            name="add", table=self, codename="add_" + self.name))
+        tstgroup.permissions.add(TenantSpecificTablesPermission.objects.create(
+            name="change", table=self, codename="change_" + self.name))
+        tstgroup.permissions.add(TenantSpecificTablesPermission.objects.create(
+            name="delete", table=self, codename="delete_" + self.name))
+
+
+class TenantSpecificTablesPermission(SingleTenantModelMixin):
+    name = models.CharField(max_length=255)
+    table = models.ForeignKey('TenantSpecificTable')
+    codename = models.CharField(max_length=100)
+
+
+class TenantSpecificTablesGroup(SingleTenantModelMixin):
+    group = models.ForeignKey(
+        Group, related_name='tenant_specific_tables_groups')
+    permissions = models.ManyToManyField(
+        'TenantSpecificTablesPermission', blank=True, related_name='groups')
+
+    class Meta:
+        unique_together = (['group', 'tenant'])
+
+
+@receiver(post_save, sender=Group)
+def create_tenant_specific_tables_group(sender, instance, created, *args, **kwargs):
+    if created:
+        new_group = TenantSpecificTablesGroup.objects.create(
+            group=instance)
+        if instance.name == 'tenant_owner':
+            for perm in TenantSpecificTablesPermission.objects.all():
+                new_group.permissions.add(perm)
+
+
+class TenantSpecificTablesRelationship(SingleTenantModelMixin):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    groups = models.ManyToManyField(
+        'TenantSpecificTablesGroup', related_name='relationships')
+    permissions = models.ManyToManyField(
+        'TenantSpecificTablesPermission', related_name='relationships')
+
+
+@receiver(post_save, sender=TenantRelationship)
+def create_tenant_specific_tables_relationship(sender, instance, created, *args, **kwargs):
+    if created:
+        new_rel = TenantSpecificTablesRelationship.objects.create(
+            user=instance.user, tenant=instance.tenant)
+        for group in instance.groups.all():
+            tstgroup = TenantSpecificTablesGroup.objects.get(group=group)
+            new_rel.groups.add(tstgroup)
+
+
+@receiver(m2m_changed, sender=TenantRelationship.groups.through)
+def add_group_tenant_specific_tables_relationship(sender, instance, action, *args, **kwargs):
+    if action == 'post_add':
+        rel, created = TenantSpecificTablesRelationship.objects.get_or_create(
+            user=instance.user, tenant=instance.tenant)
+        for group in instance.groups.all():
+            tstgroup = TenantSpecificTablesGroup.objects.get(group=group)
+            rel.groups.add(tstgroup)
 
 
 class TenantSpecificFieldsValidator(MultipleTenantsModelMixin):
