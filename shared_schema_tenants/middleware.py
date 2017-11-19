@@ -1,9 +1,9 @@
 import platform
-from django.contrib.sites.shortcuts import get_current_site
-from django.contrib.sites.models import Site
 from django.utils.functional import SimpleLazyObject
 from shared_schema_tenants.settings import get_setting
-from shared_schema_tenants.models import Tenant, TenantSite
+from shared_schema_tenants.models import Tenant
+from shared_schema_tenants.utils import import_item
+
 
 if platform.python_version_tuple()[0] == '2':
     import thread as threading
@@ -13,24 +13,27 @@ else:
 
 def get_tenant(request):
     if not hasattr(request, '_cached_tenant'):
-        try:
-            request._cached_tenant = get_current_site(request).tenant_site.tenant
-            return request._cached_tenant
-        except (TenantSite.DoesNotExist, Site.DoesNotExist):
-            pass
+        tenant_retrievers = get_setting('TENANT_RETRIEVERS')
 
-        try:
-            tenant_http_header = 'HTTP_' + get_setting('TENANT_HTTP_HEADER').replace('-', '_').upper()
-            request._cached_tenant = Tenant.objects.get(slug=request.META[tenant_http_header])
-        except LookupError:
+        for tenant_retriever in tenant_retrievers:
+            tenant = import_item(tenant_retriever)(request)
+            if tenant:
+                request._cached_tenant = tenant
+                break
+
+        if not getattr(request, '_cached_tenant', False):
             lazy_tenant = TenantMiddleware.get_current_tenant()
             if not lazy_tenant:
                 return None
 
             lazy_tenant._setup()
             request._cached_tenant = lazy_tenant._wrapped
-        except Tenant.DoesNotExist:
-            return None
+
+        elif get_setting('ADD_TENANT_TO_SESSION'):
+            try:
+                request.session['tenant_slug'] = request._cached_tenant.slug
+            except AttributeError:
+                pass
 
     return request._cached_tenant
 
