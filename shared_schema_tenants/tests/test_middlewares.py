@@ -3,6 +3,7 @@ from django.test import TestCase, RequestFactory
 from django.http import HttpResponse
 from shared_schema_tenants.middleware import TenantMiddleware, get_tenant
 from shared_schema_tenants.helpers.tenants import create_tenant, set_current_tenant
+from shared_schema_tenants.exceptions import TenantNotFoundError
 
 
 try:
@@ -72,9 +73,8 @@ class GetTenantTests(TestCase):
         factory = RequestFactory()
         request = factory.get(reverse('shared_schema_tenants:tenant_list'), **{'HTTP_TENANT_SLUG': 'unexistent'})
 
-        retrieved_tenant = get_tenant(request)
-
-        self.assertEqual(retrieved_tenant, None)
+        with self.assertRaises(TenantNotFoundError):
+            get_tenant(request)
 
     def test_with_previously_set_tenant(self):
         tenant = create_tenant(name='test', slug='test', extra_data={}, domains=['test.localhost:8000'])

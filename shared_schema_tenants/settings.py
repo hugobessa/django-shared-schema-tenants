@@ -42,6 +42,12 @@ def get_setting(settings_name):
             'DEFAULT_TENANT_SLUG',
             'default'
         ),
+        "TENANT_RETRIEVERS": tenant_settings.get('TENANT_RETRIEVERS', [
+            'shared_schema_tenants.tenant_retrievers.retrieve_by_domain',
+            'shared_schema_tenants.tenant_retrievers.retrieve_by_http_header',
+            'shared_schema_tenants.tenant_retrievers.retrieve_by_session',
+        ]),
+        "ADD_TENANT_TO_SESSION": tenant_settings.get('ADD_TENANT_TO_SESSION', True),
         "TENANT_HTTP_HEADER": tenant_settings.get('TENANT_HTTP_HEADER', 'Tenant-Slug'),
         "DEFAULT_TENANT_OWNER_PERMISSIONS": tenant_settings.get(
             'DEFAULT_TENANT_OWNER_PERMISSIONS', [

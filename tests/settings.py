@@ -70,15 +70,16 @@ SHARED_SCHEMA_TENANTS = {
     },
 }
 
-if django.VERSION >= (1, 10):
-    MIDDLEWARE = (
-        'shared_schema_tenants.middleware.TenantMiddleware',
-    )
-else:
-    MIDDLEWARE_CLASSES = (
-        'shared_schema_tenants.middleware.TenantMiddleware',
-    )
-
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'shared_schema_tenants.middleware.TenantMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 
 REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
