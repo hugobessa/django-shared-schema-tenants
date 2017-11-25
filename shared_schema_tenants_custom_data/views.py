@@ -4,7 +4,7 @@ from django.http import Http404
 from rest_framework import status, generics, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from shared_schema_tenants.utils import import_item
+from shared_schema_tenants.utils import import_from_string
 from shared_schema_tenants_custom_data.permissions import DjangoTenantSpecificTablePermissions
 from shared_schema_tenants_custom_data.settings import get_setting
 from shared_schema_tenants_custom_data.models import (
@@ -19,7 +19,7 @@ class CustomizableModelsList(APIView):
 
     def get_permissions(self):
         return [
-            import_item(permission)()
+            import_from_string(permission)()
             for permission in get_setting('CUSTOMIZABLE_MODELS_LIST_CREATE_PERMISSIONS')
         ]
 
@@ -111,7 +111,7 @@ class CustomTableDetails(generics.RetrieveUpdateDestroyAPIView):
 
     def get_permissions(self):
         return [
-            import_item(permission)()
+            import_from_string(permission)()
             for permission in get_setting('CUSTOMIZABLE_MODELS_RETRIEVE_UTPADE_DESTROY_PERMISSIONS')
         ]
 
