@@ -7,8 +7,7 @@ import json
 
 from model_utils.models import TimeStampedModel
 
-from shared_schema_tenants.managers import (
-    SingleTenantModelManager)
+from shared_schema_tenants.mixins import SingleTenantModelMixin
 from shared_schema_tenants.settings import get_setting
 from shared_schema_tenants.validators import validate_json
 
@@ -55,11 +54,9 @@ class Tenant(TimeStampedModel):
         return self.name
 
 
-class TenantSite(TimeStampedModel):
+class TenantSite(TimeStampedModel, SingleTenantModelMixin):
     tenant = models.ForeignKey('Tenant', related_name="tenant_sites")
     site = models.OneToOneField(Site, related_name="tenant_site")
-
-    objects = SingleTenantModelManager
 
     def __str__(self):
         return '%s - %s' % (self.tenant.name, self.site.domain)
@@ -68,10 +65,12 @@ class TenantSite(TimeStampedModel):
 def post_delete_tenant_site(sender, instance, *args, **kwargs):
     if instance.site:
         instance.site.delete()
+
+
 post_delete.connect(post_delete_tenant_site, sender=TenantSite)
 
 
-class TenantRelationship(TimeStampedModel):
+class TenantRelationship(TimeStampedModel, SingleTenantModelMixin):
     tenant = models.ForeignKey('Tenant', related_name="relationships")
     user = models.ForeignKey(django_settings.AUTH_USER_MODEL, related_name="relationships")
     groups = models.ManyToManyField('auth.Group',

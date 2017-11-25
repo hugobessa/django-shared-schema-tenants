@@ -132,6 +132,7 @@ class TenantSiteListViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['domain'], self.params['domain'])
 
+        set_current_tenant(self.tenant.slug)
         tenant_site = TenantSite.objects.filter(id=response.data['id']).first()
         self.assertIsNotNone(tenant_site)
 
