@@ -6,7 +6,7 @@ from django.utils.text import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.fields import get_error_detail, set_value
 from rest_framework.fields import SkipField
-from shared_schema_tenants.utils import import_item
+from shared_schema_tenants.utils import import_from_string
 from shared_schema_tenants_custom_data.settings import get_setting
 from shared_schema_tenants_custom_data.models import (
     TenantSpecificFieldDefinition, TenantSpecificTable, TenantSpecificTableRow)
@@ -268,7 +268,7 @@ class TenantSpecificModelSerializer(serializers.ModelSerializer):
         for field in self.tenant_specific_fields_definitions:
             validators = []
             for validator_instance in field.validators.all():
-                validator_function = import_item(validator_instance.module_path)
+                validator_function = import_from_string(validator_instance.module_path)
                 validators.append(validator_function)
 
             validate_method = compose_list(validators)
@@ -371,7 +371,7 @@ def get_tenant_specific_table_row_serializer_class(table_name):
             for field in tenant_specific_fields_definitions:
                 validators = []
                 for validator_instance in field.validators.all():
-                    validator_function = import_item(validator_instance.module_path)
+                    validator_function = import_from_string(validator_instance.module_path)
                     validators.append(validator_function)
 
                 validate_method = compose_list(validators)

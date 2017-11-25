@@ -21,6 +21,14 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ('id', 'text',)
 
+    def create(self, validated_data):
+        tag = Tag.objects.filter(**validated_data).first()
+
+        if tag:
+            return tag
+
+        return Tag.objects.create(**validated_data)
+
 
 class ArticleSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, required=False, allow_null=True)

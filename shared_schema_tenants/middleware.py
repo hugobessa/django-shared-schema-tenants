@@ -2,7 +2,7 @@ import platform
 from django.utils.functional import SimpleLazyObject
 from shared_schema_tenants.settings import get_setting
 from shared_schema_tenants.models import Tenant
-from shared_schema_tenants.utils import import_item
+from shared_schema_tenants.utils import import_from_string
 
 
 if platform.python_version_tuple()[0] == '2':
@@ -16,7 +16,7 @@ def get_tenant(request):
         tenant_retrievers = get_setting('TENANT_RETRIEVERS')
 
         for tenant_retriever in tenant_retrievers:
-            tenant = import_item(tenant_retriever)(request)
+            tenant = import_from_string(tenant_retriever)(request)
             if tenant:
                 request._cached_tenant = tenant
                 break

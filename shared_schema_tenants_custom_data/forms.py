@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.forms.fields import FileField
 
-from shared_schema_tenants.utils import import_item
+from shared_schema_tenants.utils import import_from_string
 from shared_schema_tenants_custom_data.models import (
     TenantSpecificFieldDefinition, TenantSpecificTable, TenantSpecificTableRow)
 from shared_schema_tenants_custom_data.utils import compose_list
@@ -75,7 +75,7 @@ class TenantSpecificModelForm(forms.ModelForm):
                     value = field.clean(value)
                     validators = []
                     for validator_instance in definition.validators.all():
-                        validator_function = import_item(validator_instance.module_path)
+                        validator_function = import_from_string(validator_instance.module_path)
                         validators.append(validator_function)
 
                     validate_method = compose_list(validators)
@@ -192,7 +192,7 @@ def get_tenant_specific_table_row_form_class(table_name):
                         value = field.clean(value)
                         validators = []
                         for validator_instance in definition.validators.all():
-                            validator_function = import_item(validator_instance.module_path)
+                            validator_function = import_from_string(validator_instance.module_path)
                             validators.append(validator_function)
 
                         validate_method = compose_list(validators)
