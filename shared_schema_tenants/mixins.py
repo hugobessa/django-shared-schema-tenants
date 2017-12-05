@@ -22,6 +22,7 @@ class SingleTenantModelMixin(models.Model):
         abstract = True
         default_manager_name = 'original_manager'
         base_manager_name = 'original_manager'
+        indexes = [models.Index(fields=['tenant'])]
 
     def save(self, *args, **kwargs):
         if not hasattr(self, 'tenant'):
