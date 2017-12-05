@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.version import get_complete_version
 from shared_schema_tenants.settings import get_setting
 from shared_schema_tenants.managers import SingleTenantModelManager, MultipleTenantModelManager
 from shared_schema_tenants.helpers.tenants import get_current_tenant
@@ -22,7 +23,7 @@ class SingleTenantModelMixin(models.Model):
         abstract = True
         default_manager_name = 'original_manager'
         base_manager_name = 'original_manager'
-        indexes = [models.Index(fields=['tenant'])]
+        index_together = ['tenant', 'id']
 
     def save(self, *args, **kwargs):
         if not hasattr(self, 'tenant'):

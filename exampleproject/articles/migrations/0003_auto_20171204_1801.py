@@ -12,8 +12,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddIndex(
-            model_name='article',
-            index=models.Index(fields=['tenant'], name='articles_ar_tenant__44006e_idx'),
+        migrations.AlterIndexTogether(
+            name='article',
+            index_together=set([('tenant', 'id')]),
         ),
     ]
