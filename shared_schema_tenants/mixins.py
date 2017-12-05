@@ -21,6 +21,8 @@ class SingleTenantModelMixin(models.Model):
 
     class Meta:
         abstract = True
+        default_manager_name = 'objects'
+        base_manager_name = 'objects'
 
     def save(self, *args, **kwargs):
         if not hasattr(self, 'tenant'):
@@ -42,6 +44,8 @@ class MultipleTenantsModelMixin(models.Model):
 
     class Meta:
         abstract = True
+        default_manager_name = 'objects'
+        base_manager_name = 'objects'
 
     def save(self, *args, **kwargs):
         tenant = get_current_tenant()
