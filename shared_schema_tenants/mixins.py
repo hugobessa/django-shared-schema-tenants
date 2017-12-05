@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils.version import get_complete_version
 from shared_schema_tenants.settings import get_setting
 from shared_schema_tenants.managers import SingleTenantModelManager, MultipleTenantModelManager
 from shared_schema_tenants.helpers.tenants import get_current_tenant
@@ -12,7 +11,8 @@ def get_default_tenant():
 
 
 class SingleTenantModelMixin(models.Model):
-    tenant = models.ForeignKey('shared_schema_tenants.Tenant', default=get_default_tenant)
+    tenant = models.ForeignKey(
+        'shared_schema_tenants.Tenant', default=get_default_tenant)
 
     objects = SingleTenantModelManager()
 
@@ -21,9 +21,6 @@ class SingleTenantModelMixin(models.Model):
 
     class Meta:
         abstract = True
-        default_manager_name = 'original_manager'
-        base_manager_name = 'original_manager'
-        index_together = ['tenant', 'id']
 
     def save(self, *args, **kwargs):
         if not hasattr(self, 'tenant'):
@@ -45,8 +42,6 @@ class MultipleTenantsModelMixin(models.Model):
 
     class Meta:
         abstract = True
-        default_manager_name = 'original_manager'
-        base_manager_name = 'original_manager'
 
     def save(self, *args, **kwargs):
         tenant = get_current_tenant()
