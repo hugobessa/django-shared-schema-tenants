@@ -16,7 +16,7 @@ A lib to help in the creation applications with shared schema without suffering
 Documentation
 -------------
 
-The full documentation is at https://django-shared-schema-tenants.readthedocs.io.
+The full documentation is at [ReadTheDocs](https://django-shared-schema-tenants.readthedocs.io).
 
 Quickstart
 ----------
