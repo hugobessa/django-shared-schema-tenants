@@ -44,7 +44,7 @@ make your model inherit from ``SingleTenantModelMixin`` or
 
 .. code:: python
 
-    from shared_schema_tenants.mixins import SingleTenantModelMixin, MultipleTenantsModel
+    from shared_schema_tenants.mixins import SingleTenantModelMixin, MultipleTenantsModelMixin
 
     class MyModelA(SingleTenantModelMixin)
         field1 = models.CharField(max_length=100)
